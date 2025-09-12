@@ -1,0 +1,114 @@
+<div class="container-fluid py-2">
+
+  <!-- Tables Grid -->
+  <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-3">
+    <div class="col" *ngFor="let table of tables">
+      <div class="card text-center shadow-sm rounded-3 cursor-pointer position-relative"
+           [ngClass]="table.isOccupied ? 'bg-danger text-white' : 'bg-success text-white'"
+           [style.pointerEvents]="table.isOccupied ? 'none' : 'auto'"
+           (click)="selectTable(table)"
+           style="transition: transform 0.2s;"
+           (mouseover)="!table.isOccupied ? table.hover=true : null"
+           (mouseout)="!table.isOccupied ? table.hover=false : null"
+           [style.transform]="table.hover ? 'scale(1.05)' : 'scale(1)'">
+        <div class="card-body p-2">
+          <h5 class="fw-bold mb-1 small">Table {{table.TableNumber}}</h5>
+          <span class="badge bg-light text-dark rounded-pill px-3 py-1 small">
+            {{table.isOccupied ? 'Occupied' : 'Free'}}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selected Table + Menu Section -->
+  <div *ngIf="selectedTable" class="mt-3">
+
+    <!-- Selected Table Info -->
+    <div class="alert alert-info rounded-pill text-center fw-bold small">
+      🍽 Selected Table: <span class="text-primary">{{selectedTable.TableNumber}}</span>
+    </div>
+
+    <!-- Menu Search -->
+    <div class="mb-3 d-flex justify-content-center">
+      <input type="text" class="form-control form-control-sm w-50"
+             placeholder="Search menu..." [(ngModel)]="searchText">
+    </div>
+
+    <!-- Category Pills (Sticky Top on Scroll) -->
+    <div class="d-flex flex-wrap justify-content-center mb-3 sticky-top bg-white pt-2 pb-2 z-index-1 shadow-sm">
+      <button *ngFor="let c of categories"
+              class="btn btn-sm me-2 mb-2"
+              [class.btn-primary]="c.Id === activeCategoryId"
+              [class.btn-outline-primary]="c.Id !== activeCategoryId"
+              (click)="activeCategoryId = c.Id">
+        {{c.Name}}
+      </button>
+    </div>
+
+    <!-- Menu Items Grid -->
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3 mb-5">
+      <div class="col" *ngFor="let item of getFilteredMenu() | searchFilter:searchText:['Name','Price']">
+        <div class="card shadow-sm rounded-3 h-100 text-center p-2 cursor-pointer"
+             (click)="addToOrder(item)"
+             style="transition: transform 0.2s, box-shadow 0.2s;"
+             (mouseover)="item.hover=true"
+             (mouseout)="item.hover=false"
+             [style.transform]="item.hover ? 'scale(1.05)' : 'scale(1)'"
+             [style.boxShadow]="item.hover ? '0 0.5rem 1rem rgba(0,0,0,0.15)' : ''">
+          <div class="card-body p-2">
+            <h6 class="fw-bold mb-1 small">{{item.Name}}</h6>
+            <span class="text-success fw-bold small">{{item.Price | currency:'INR'}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Panel (Sticky Bottom for Mobile) -->
+  <div class="card shadow-lg fixed-bottom rounded-top-4"
+       *ngIf="selectedTable && orderItems.length > 0"
+       style="max-height: 50vh; overflow-y: auto;">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <span>🧾 Current Order</span>
+      <button class="btn btn-sm btn-light" (click)="orderItems = []">Clear</button>
+    </div>
+
+    <div class="card-body p-2 table-responsive">
+      <table class="table table-sm align-middle mb-0 table-bordered">
+        <tbody>
+          <tr *ngFor="let item of orderItems">
+            <td class="fw-bold small">{{item.Name}}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-secondary me-1 py-0 px-1" (click)="decreaseQty(item)">-</button>
+              <span class="fw-bold small">{{item.qty}}</span>
+              <button class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1" (click)="increaseQty(item)">+</button>
+            </td>
+            <td class="text-end small">{{item.Price * item.qty | currency:'INR'}}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-danger rounded-circle py-0 px-1" (click)="removeItem(item)">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer bg-light text-end">
+      <h6 class="fw-bold text-success mb-2">
+        Total: {{getOrderTotal() | currency:'INR'}}
+      </h6>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-warning btn-sm flex-fill py-1"
+                [disabled]="orderItems.length === 0"
+                (click)="printForKitchen()">
+          🍳 Kitchen Print
+        </button>
+        <button class="btn btn-primary btn-sm flex-fill py-1"
+                [disabled]="orderItems.length === 0"
+                (click)="submitOrder()">
+          ✅ Submit Order
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

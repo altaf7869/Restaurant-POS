@@ -1,0 +1,15 @@
+.nav-tabs .nav-link {
+  cursor: pointer;
+  transition: 0.3s;
+}
+.nav-tabs .nav-link:hover {
+  background-color: #f8f9fa;
+}
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}

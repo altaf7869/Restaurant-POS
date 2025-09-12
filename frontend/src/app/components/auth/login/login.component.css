@@ -1,0 +1,12 @@
+body {
+  background: linear-gradient(to right, #f8f9fa, #e9ecef);
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.btn-outline-secondary {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}

@@ -1,0 +1,61 @@
+<div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
+  <div class="card shadow-lg p-4" style="width: 100%; max-width: 450px;">
+    <div class="text-center mb-4">
+      <h3 class="fw-bold">POS Signup</h3>
+    </div>
+
+    <form [formGroup]="signupForm" (ngSubmit)="submitForm()">
+      <!-- Full Name -->
+      <div class="mb-3">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-control" formControlName="fullName" placeholder="Enter full name">
+        <div *ngIf="signupForm.controls['fullName'].invalid && signupForm.controls['fullName'].touched" class="text-danger small">
+          Full Name is required
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" formControlName="username" placeholder="Enter username">
+        <div *ngIf="signupForm.controls['username'].invalid && signupForm.controls['username'].touched" class="text-danger small">
+          Username is required
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3 position-relative">
+        <label class="form-label">Password</label>
+        <input [type]="showPassword ? 'text' : 'password'" class="form-control" formControlName="password" placeholder="Enter password">
+        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+          (click)="togglePassword()">
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+        <div *ngIf="signupForm.controls['password'].invalid && signupForm.controls['password'].touched" class="text-danger small">
+          Password is required (min 6 chars)
+        </div>
+      </div>
+
+      <!-- Role -->
+      <div class="mb-3">
+        <label class="form-label">Role</label>
+        <select class="form-select" formControlName="role">
+          <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+        </select>
+      </div>
+
+      <!-- Error / Success messages -->
+      <div *ngIf="errorMessage" class="alert alert-danger py-1">{{errorMessage}}</div>
+      <div *ngIf="successMessage" class="alert alert-success py-1">{{successMessage}}</div>
+
+      <!-- Submit button -->
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-success">Signup</button>
+      </div>
+
+      <div class="text-center">
+        Already have an account? <a routerLink="/login">Login here</a>
+      </div>
+    </form>
+  </div>
+</div>

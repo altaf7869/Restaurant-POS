@@ -1,0 +1,47 @@
+<div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
+  <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
+    <div class="text-center mb-4">
+      <h3 class="fw-bold">Restaurant POS Login</h3>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="submitForm()">
+      <!-- Username -->
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" formControlName="username" placeholder="Enter username" autofocus>
+        <div *ngIf="loginForm.controls['username'].invalid && loginForm.controls['username'].touched" class="text-danger small">
+          Username is required
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3 position-relative">
+        <label class="form-label">Password</label>
+        <input [type]="showPassword ? 'text' : 'password'" class="form-control" formControlName="password" placeholder="Enter password">
+        <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+          (click)="togglePassword()">
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+        <div *ngIf="loginForm.controls['password'].invalid && loginForm.controls['password'].touched" class="text-danger small">
+          Password is required
+        </div>
+      </div>
+
+      <!-- Server error -->
+      <div *ngIf="errorMessage" class="alert alert-danger py-1">
+        {{errorMessage}}
+      </div>
+
+      <!-- Submit button -->
+      <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+
+      <!-- Signup link -->
+      <div class="text-center">
+        Don't have an account? 
+        <a routerLink="/signup" class="text-decoration-none">Sign up here</a>
+      </div>
+    </form>
+  </div>
+</div>

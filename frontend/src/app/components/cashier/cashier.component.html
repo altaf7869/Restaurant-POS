@@ -1,0 +1,86 @@
+<div class="container mt-4">
+
+  <h4 class="mb-4 text-center text-primary fw-bold">Cashier - Pending Orders</h4>
+
+  <div *ngFor="let o of orders" class="card mb-3 shadow-sm rounded-4">
+    <div class="card-header d-flex justify-content-between flex-wrap align-items-center bg-light">
+      <div class="fw-bold">Order #{{o.Id}} — Table {{o.TableId}}</div>
+      <div class="d-flex flex-wrap gap-1 mt-2 mt-md-0">
+        <button class="btn btn-sm btn-success fw-bold" (click)="markAsPaid(o)">
+          ✅ Paid
+        </button>
+        <button class="btn btn-sm btn-secondary fw-bold" (click)="viewOrder(o)">
+          🖨 Print
+        </button>
+        <button class="btn btn-sm btn-danger fw-bold" (click)="cancelOrder(o)">
+          ❌ Cancel
+        </button>
+        <button class="btn btn-sm btn-primary fw-bold" 
+                data-bs-toggle="modal" 
+                data-bs-target="#shareBillModal" 
+                (click)="selectedOrder = o">
+          📤 Share
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body p-2">
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0 align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th class="text-start">Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let it of o.Items">
+              <td class="text-start">{{it.Name}}</td>
+              <td>{{it.qty}}</td>
+              <td>{{it.Price | currency:'INR'}}</td>
+              <td>{{ (it.Price * it.qty) | currency:'INR' }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="3" class="text-end">Order Total:</th>
+              <th>{{ o.Total | currency:'INR' }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Bill Modal -->
+<div class="modal fade" id="shareBillModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Share Bill on WhatsApp</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form #shareForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Customer Name</label>
+            <input type="text" class="form-control" [(ngModel)]="customerName" name="name" placeholder="Enter name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Mobile Number</label>
+            <input type="tel" class="form-control" [(ngModel)]="customerPhone" name="phone" placeholder="Enter number" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-success fw-bold" (click)="shareBill(shareForm)">
+          📤 Send
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

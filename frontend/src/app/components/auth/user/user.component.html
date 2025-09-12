@@ -1,0 +1,65 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Users Management</h4>
+    </div>
+    <div class="card-body">
+      <!-- User Form -->
+      <form [formGroup]="userForm" (ngSubmit)="submitForm()" class="row g-2 mb-4">
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control" placeholder="Username" formControlName="username">
+        </div>
+        <div class="col-12 col-md-3">
+          <input type="password" class="form-control" placeholder="Password" formControlName="password">
+        </div>
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control" placeholder="Full Name" formControlName="fullName">
+        </div>
+        <div class="col-12 col-md-2">
+          <select class="form-select" formControlName="role">
+            <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-1 d-grid">
+          <button type="submit" class="btn btn-success">{{editMode ? 'Update' : 'Add'}}</button>
+        </div>
+      </form>
+
+      <!-- Users Table -->
+      <div class="table-responsive">
+        <!-- users.component.html -->
+<input type="text"
+       class="form-control w-25 mb-3"
+       placeholder="Search users..."
+       [(ngModel)]="searchText">
+
+<table class="table table-bordered table-striped align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th>ID</th>
+      <th>Username</th>
+      <th>Full Name</th>
+      <th>Role</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let u of users | searchFilter:searchText:['Username','FullName','Role']">
+      <td>{{u.Id}}</td>
+      <td>{{u.Username}}</td>
+      <td>{{u.FullName}}</td>
+      <td>{{u.Role}}</td>
+      <td>
+        <button class="btn btn-sm btn-warning me-1 mb-1 mb-md-0" (click)="editUser(u)">Edit</button>
+        <button class="btn btn-sm btn-danger" (click)="deleteUser(u.Id)">Delete</button>
+      </td>
+    </tr>
+    <tr *ngIf="(users | searchFilter:searchText:['Username','FullName','Role']).length === 0">
+      <td colspan="5" class="text-center text-muted">No users found</td>
+    </tr>
+  </tbody>
+</table>
+      </div>
+    </div>
+  </div>
+</div>
