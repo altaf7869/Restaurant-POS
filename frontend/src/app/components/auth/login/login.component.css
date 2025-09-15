@@ -1,12 +1,22 @@
-body {
-  background: linear-gradient(to right, #f8f9fa, #e9ecef);
-}
-
 .card {
-  border-radius: 12px;
-}
+    background: #ffffff;
+  }
 
-.btn-outline-secondary {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-}
+  .input-group-text {
+    border-radius: 0.5rem 0 0 0.5rem !important;
+  }
+
+  .form-control:focus {
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    border-color: #007bff;
+  }
+
+  .btn-outline-secondary {
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+  }
+
+  @media (max-width: 576px) {
+    .card {
+      padding: 2rem 1rem;
+    }
+  }

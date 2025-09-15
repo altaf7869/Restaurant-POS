@@ -9,6 +9,7 @@ import { AdminGuard } from './guards/admin.guard';
 import { SignupComponent } from './components/auth/signup/signup.component';
 import { WaiterComponent } from './components/waiter/waiter.component';
 import { CashierComponent } from './components/cashier/cashier.component';
+import { OrdersHistoryComponent } from './components/orders-history/orders-history.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,6 +19,8 @@ export const routes: Routes = [
   { path: 'menu', component: MenuComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'tables', component: TableComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'waiter', component: WaiterComponent, canActivate: [AuthGuard] },
+    { path: 'order-history', component: OrdersHistoryComponent, canActivate: [AuthGuard] },
+
     { path: 'cashier', component: CashierComponent, canActivate: [AuthGuard] },
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },

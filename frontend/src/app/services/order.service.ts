@@ -1,49 +1,81 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
+/** ✅ Define interfaces for strong typing */
+export interface OrderItem {
+  menuItemId: number;
+  Name: string;
+  Price: number;
+  qty: number;
+}
+
+export interface Order {
+  Id: number;
+  TableId: number;
+  Items: any[];
+  Status: string;
+  Total?: number;          // <-- add this
+  GST?: number;
+  DiscountPercent?: number;
+  DiscountAmount?: number;
+  GrandTotal?: number;
+}
+
+
+/** ✅ Service for handling orders and table cache */
 @Injectable({ providedIn: 'root' })
 export class OrderService {
-  private base =  environment.apiUrl +'/orders';
-  token: string | null = null;
+  private readonly base = `${environment.apiUrl}/orders`;
+
+  /** Global cache of orders per table */
+  private orderMap: { [tableId: number]: OrderItem[] } = {};
+  private orderMapSubject = new BehaviorSubject<{ [tableId: number]: OrderItem[] }>({});
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
-  private getHeaders(): { headers: HttpHeaders } {
-    this.token = this.auth.getToken();
+  /** ✅ Centralized headers */
+  private getHeaders() {
+    const token = this.auth.getToken();
     return {
       headers: new HttpHeaders({
-        'Authorization': `Bearer ${this.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       })
     };
   }
 
-  createOrder(payload: any): Observable<any> {
-    return this.http.post(this.base, payload, this.getHeaders());
+  /** ------------------ API METHODS ------------------ */
+
+  createOrder(payload: Partial<Order>): Observable<Order> {
+    return this.http.post<Order>(this.base, payload, this.getHeaders());
   }
 
-  getPendingOrders(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.base}/pending`, this.getHeaders());
+  getPendingOrders(): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.base}/pending`, this.getHeaders());
   }
 
-  markPaid(id: number): Observable<any> {
-    return this.http.put<any>(
-      `${this.base}/${id}/mark-paid`,
-      {}, // ✅ empty body
-      this.getHeaders() // ✅ headers go here (options)
-    );
+  getOrder(id: number): Observable<Order> {
+    return this.http.get<Order>(`${this.base}/${id}`, this.getHeaders());
   }
 
-  getOrder(id: number): Observable<any> {
-    return this.http.get(`${this.base}/${id}`, this.getHeaders());
+  getAllOrderHistory(): Observable<Order> {
+    return this.http.get<Order>(`${this.base}/all/history`, this.getHeaders());
   }
 
-  updateOrder(id: number, payload: any): Observable<any> {
-    return this.http.put(`${this.base}/${id}`, payload, this.getHeaders());
+  updateOrder(id: number, payload: Partial<Order>): Observable<Order> {
+    return this.http.put<Order>(`${this.base}/${id}`, payload, this.getHeaders());
   }
+
+  // markPaid(id: number): Observable<any> {
+  //   return this.http.put(`${this.base}/${id}/mark-paid`, {}, this.getHeaders());
+  // }
+markPaid(id: number, paymentData: { amount: number; method: string; collectedBy: any }) {
+  return this.http.put<any>(`${this.base}/${id}/mark-paid`, paymentData, this.getHeaders());
+}
+
 
   deleteOrder(id: number): Observable<any> {
     return this.http.delete(`${this.base}/${id}`, this.getHeaders());
@@ -52,29 +84,61 @@ export class OrderService {
   printOrder(id: number): Observable<string> {
     return this.http.post(
       `${this.base}/${id}/print`,
-      {}, // empty body
-      { ...this.getHeaders(), responseType: 'text' as const } // ✅ headers + response type
+      {},
+      { ...this.getHeaders(), responseType: 'text' as const }
     );
   }
 
-  getOrderPdf(id: number) {
-  return this.http.get(`${this.base}/${id}/print?format=pdf`, {
-    ...this.getHeaders(),
-    responseType: 'blob' 
-  });
-}
+  getOrderByTable(tableId: number): Observable<Order | null> {
+    return this.http.get<Order | null>(`${this.base}/table/${tableId}`, this.getHeaders());
+  }
 
-kitchenPrint(tableNumber: number, items: any[]) {
-  return this.http.post(
-    `${this.base}/kitchen-print`,
-    { tableNumber, items },
-    {  ...this.getHeaders(),responseType: 'text' } // VERY IMPORTANT → so we get raw HTML, not JSON
-  );
-}
+  getOrderPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/print?format=pdf`, {
+      ...this.getHeaders(),
+      responseType: 'blob'
+    });
+  }
 
-shareOrder(orderId: number, payload: { phone: string, name: string }) {
-  return this.http.post(`${this.base}/${orderId}/share`, payload, this.getHeaders());
-}
+  kitchenPrint(tableNumber: number, items: OrderItem[]): Observable<string> {
+    return this.http.post(
+      `${this.base}/kitchen-print`,
+      { tableNumber, items },
+      { ...this.getHeaders(), responseType: 'text' }
+    );
+  }
 
+  shareOrder(orderId: number, payload: { phone: string; name: string }): Observable<any> {
+    return this.http.post(`${this.base}/${orderId}/share`, payload, this.getHeaders());
+  }
 
+  /** ------------------ TABLE ORDER CACHE ------------------ */
+
+  /** Get current order map as observable (reactive) */
+  getOrderMap$(): Observable<{ [tableId: number]: OrderItem[] }> {
+    return this.orderMapSubject.asObservable();
+  }
+
+  /** Get current items for a specific table */
+  getOrderByTableId(tableId: number): OrderItem[] {
+    return this.orderMap[tableId] || [];
+  }
+
+  /** Set items for a specific table and emit changes */
+  setOrderForTable(tableId: number, items: OrderItem[]) {
+    this.orderMap[tableId] = items;
+    this.orderMapSubject.next(this.orderMap);
+  }
+
+  /** Clear a specific table */
+  clearTable(tableId: number) {
+    delete this.orderMap[tableId];
+    this.orderMapSubject.next(this.orderMap);
+  }
+
+  /** Clear all table orders */
+  clearAll() {
+    this.orderMap = {};
+    this.orderMapSubject.next(this.orderMap);
+  }
 }

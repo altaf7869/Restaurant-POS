@@ -3,6 +3,8 @@ const { generateOrderHtml } = require('../utils/orderTemplate');
 const { generateOrderPdf } = require("../utils/pdfGenerator");
 const { generateKitchenHtml } = require('../utils/kitchenTemplate'); // new utility for kitchen slip
 const axios = require("axios");
+const https = require('https');
+
 
 /**
  * Create a new order
@@ -50,6 +52,23 @@ async function getOrderById(req, res) {
   }
 }
 
+
+/**
+ * Get All Orders
+ */
+async function getAllOrders(req, res) {
+  try {
+    const orders = await orderModel.fetchAllOrders();
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ message: 'No orders found' });
+    }
+    res.json(orders);
+  } catch (err) {
+    console.error("Get Order Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
 /**
  * Update order (full update)
  */
@@ -67,16 +86,39 @@ async function updateOrder(req, res) {
 /**
  * Mark order as paid
  */
+// async function markPaid(req, res) {
+//   try {
+//     const updatedOrder = await orderModel.updateStatus(req.params.id, 'paid');
+//     req.app.get('io').emit('orderUpdated', updatedOrder);
+//     res.json(updatedOrder);
+//   } catch (err) {
+//     console.error("Mark Paid Error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// }
+
 async function markPaid(req, res) {
   try {
-    const updatedOrder = await orderModel.updateStatus(req.params.id, 'paid');
+    const { amount, method, collectedBy } = req.body; // Get payment data from frontend
+    if (!amount || !method || !collectedBy) {
+      return res.status(400).json({ error: 'Payment data is required' });
+    }
+
+    const paymentData = { amount, method, collectedBy };
+
+    // Call updateStatus with payment data
+    const updatedOrder = await orderModel.updateStatus(req.params.id, 'Paid', paymentData);
+
+    // Emit socket event
     req.app.get('io').emit('orderUpdated', updatedOrder);
+
     res.json(updatedOrder);
   } catch (err) {
     console.error("Mark Paid Error:", err);
     res.status(500).json({ error: err.message });
   }
 }
+
 
 /**
  * Delete order
@@ -133,49 +175,101 @@ async function kitchenPrint(req, res) {
   }
 }
 
+
+async function getOrderByTable(req, res) {
+  try {
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ message: 'TableId is required' });
+
+    const order = await orderModel.findOrderByTable(tableId);
+    if (!order) return res.json(null);
+
+    res.json(order);
+  } catch (err) {
+    console.error('Error in getOrderByTable:', err);
+    res.status(500).json({ message: 'Error fetching order', error: err.message });
+  }
+}
+
+
+
 /**
  * Share order via WhatsApp Cloud API
  */
 async function shareOrder(req, res) {
   try {
     const { phone } = req.body;
-    if (!phone) return res.status(400).json({ message: "Phone number required" });
+    const orderId = req.params.id;
 
-    const order = await orderModel.getById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number required" });
+    }
 
-    const pdfBuffer = await generateOrderPdf(order);
+    const order = await orderModel.getById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
-    // TODO: Upload PDF to a public URL or WhatsApp Cloud API media upload
+    // Generate PDF buffer using Puppeteer
+    const pdfBuffer = await generateOrderPdf(order); // ✅ Must return Buffer
+
+    // Create HTTPS agent to bypass self-signed certificate issue (safe for internal use)
+    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+    // Upload PDF to WhatsApp Cloud API to get media ID
+    const mediaUploadRes = await axios.post(
+      `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
+      pdfBuffer,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          'Content-Type': 'application/pdf'
+        },
+        params: {
+          messaging_product: 'whatsapp'
+        },
+        httpsAgent
+      }
+    );
+
+    const mediaId = mediaUploadRes.data.id;
+    if (!mediaId) {
+      throw new Error('Failed to upload PDF to WhatsApp');
+    }
+
+    // Send the document using media ID
     await axios.post(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
-        messaging_product: "whatsapp",
+        messaging_product: 'whatsapp',
         to: phone,
-        type: "document",
+        type: 'document',
         document: {
-          filename: `order-${order.Id}.pdf`,
+          id: mediaId,
           caption: `Your Bill #${order.Id}`,
-          link: `http://localhost:3000/order-pdfs/order-${order.Id}.pdf`
+          filename: `order-${order.Id}.pdf`
         }
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json",
-        }
+          'Content-Type': 'application/json'
+        },
+        httpsAgent
       }
     );
 
     res.json({ message: "Order shared on WhatsApp!" });
+
   } catch (err) {
-    console.error("Share Order Error:", err);
+    console.error("Share Order Error:", err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 }
 
 module.exports = {
   createOrder,
+  getAllOrders,
   getPendingOrders,
   getOrderById,
   updateOrder,
@@ -184,4 +278,5 @@ module.exports = {
   markPaid,
   kitchenPrint,  // added
   shareOrder,
+  getOrderByTable
 };

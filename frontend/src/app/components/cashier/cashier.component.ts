@@ -3,6 +3,7 @@ import { SocketService } from '../../services/socket.service';
 import { OrderService } from '../../services/order.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 declare var bootstrap: any;
 
 @Component({
@@ -14,22 +15,21 @@ declare var bootstrap: any;
 })
 export class CashierComponent implements OnInit {
   orders: any[] = [];
-selectedOrder: any;
-customerName = '';
-customerPhone = '';
+  selectedOrder: any;
+  customerName = '';
+  customerPhone = '';
 
-  constructor(private orderService: OrderService, private socket: SocketService) {}
+  constructor(private orderService: OrderService, private socket: SocketService, private authService:AuthService) {}
 
   ngOnInit(): void {
     this.loadOrders();
 
     this.socket.onEvent('orderCreated').subscribe((newOrder: any) => {
-      const order = { ...newOrder, Items: this.parseItems(newOrder.Items) };
-      this.orders.unshift(order);
+      this.orders.unshift(this.prepareOrder(newOrder));
     });
 
     this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
-      const order = { ...updated, Items: this.parseItems(updated.Items) };
+      const order = this.prepareOrder(updated);
       const idx = this.orders.findIndex(o => o.Id === order.Id);
       if (idx > -1) this.orders[idx] = order;
       else this.orders.unshift(order);
@@ -42,97 +42,170 @@ customerPhone = '';
 
   loadOrders() {
     this.orderService.getPendingOrders().subscribe(res => {
-      // Parse Items for all orders
-      this.orders = res.map(o => ({ ...o, Items: this.parseItems(o.Items) }));
-     // console.log(this.orders);
+      this.orders = res.map(o => this.prepareOrder(o));
     });
   }
 
-  parseItems(items: any) {
+  prepareOrder(order: any) {
+    order.Items = this.parseItems(order.Items);
+    order.DiscountPercent = Number(order.DiscountPercent) || 0;
+    order.DiscountAmount = Number(order.DiscountAmount) || 0;
+    order.GST = Number(order.GST) || 0;
+    order.GrandTotal = this.calculateGrandTotal(order);
+    return order;
+  }
+
+  parseItems(items: any): any[] {
     if (!items) return [];
     try {
-      return typeof items === 'string' ? JSON.parse(items) : items;
+      return typeof items === 'string' ? JSON.parse(items) : Array.isArray(items) ? items : [];
     } catch (err) {
       console.error('Failed to parse Items JSON', err);
       return [];
     }
   }
 
+getSubtotal(order: any): number {
+  const items = Array.isArray(order.Items) ? order.Items : [];
+  return items.reduce((sum: number, item: any) => {
+    const price = Number(item.Price ?? item.price) || 0;
+    const qty = Number(item.Qty ?? item.qty) || 0;
+    return sum + price * qty;
+  }, 0);
+}
+
+
+  updateDiscount(order: any): void {
+    const subtotal = this.getSubtotal(order);
+    const discountPercent = Number(order.DiscountPercent) || 0;
+    order.DiscountAmount = (subtotal * discountPercent) / 100;
+    order.GrandTotal = this.calculateGrandTotal(order);
+  }
+
+  calculateGrandTotal(order: any): number {
+    const subtotal = this.getSubtotal(order);
+    const discount = Math.min(Number(order.DiscountAmount) || 0, subtotal);
+    const gstPercent = Number(order.GST) || 0;
+    const total = (subtotal - discount) * (1 + gstPercent / 100);
+    return Number(total.toFixed(2));
+  }
+
+  getFinalTotal(order: any): number {
+    return this.calculateGrandTotal(order);
+  }
+
+ applyDiscount(order: any): void {
+  if (!order.Items || !Array.isArray(order.Items) || order.Items.length === 0) {
+    alert('No items found in the order. Cannot apply discount.');
+    return;
+  }
+
+  this.updateDiscount(order);
+
+ this.orderService.updateOrder(order.Id, {
+    DiscountPercent: Number(order.DiscountPercent) || 0,
+    DiscountAmount: Number(order.DiscountAmount) || 0,
+    Total: order.GrandTotal,
+    Items: order.Items 
+  }).subscribe({
+    next: (response) => {
+      console.log('Backend response:', response);
+      alert('Discount applied successfully');
+      const modalEl = document.getElementById('discountModal');
+      if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+    },
+    error: err => {
+      console.error('Failed to apply discount:', err);
+      alert('Failed to apply discount');
+    }
+  });
+}
+
+ openPaymentModal(order: any) {
+    this.selectedOrder = order;
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal')!);
+    modal.show();
+  }
+
+
   // markAsPaid(order: any) {
-  //   this.orderService.updateOrder(order.Id, { status: 'paid' }).subscribe(() => {
-  //     alert('Marked paid');
-  //     this.loadOrders();
+  //   this.orderService.markPaid(order.Id).subscribe({
+  //     next: updated => {
+  //       this.orders = this.orders.filter(o => o.Id !== updated.Id);
+  //       alert(`Order paid. Final Total: ₹${order.GrandTotal.toFixed(2)}`);
+  //     },
+  //     error: err => console.error(err)
   //   });
   // }
+
+confirmPayment(method: 'Online' | 'Cash') {
+  if (!this.selectedOrder) {
+    alert("No order selected!");
+    return;
+  }
+
+  const loggedInUser = this.authService.getUserId(); // Logged-in user ID
+  const paymentPayload = {
+    amount: this.selectedOrder.GrandTotal,
+    method: method,
+    collectedBy: loggedInUser
+  };
+
+  this.orderService.markPaid(this.selectedOrder.Id, paymentPayload).subscribe({
+    next: updated => {
+      this.orders = this.orders.filter(o => o.Id !== updated.Id);
+
+      // Close modal after payment
+      const modalEl = document.getElementById('paymentModal');
+      const modal = bootstrap.Modal.getInstance(modalEl!);
+      modal.hide();
+
+      alert(`Order paid via ${method}. Final Total: ₹${this.selectedOrder.GrandTotal.toFixed(2)}`);
+      this.selectedOrder = null;
+    },
+    error: err => console.error(err)
+  });
+}
+
 
   cancelOrder(order: any) {
     if (!confirm('Cancel order?')) return;
     this.orderService.deleteOrder(order.Id).subscribe(() => this.loadOrders());
   }
 
-  markAsPaid(order: any) {
-    this.orderService.markPaid(order.Id).subscribe({
-      next: updated => {
-        updated.Items = JSON.parse(updated.Items);
-        const idx = this.orders.findIndex(o => o.Id === updated.Id);
-        if (idx > -1) this.orders[idx] = updated;
-        alert('Order marked as paid');
-        this.loadOrders();
-      },
-      error: err => console.error(err)
-    });
-  }
-
-
   viewOrder(order: any) {
-  this.orderService.printOrder(order.Id).subscribe({
-    next: (html: string) => {
-      const w = window.open('', '_blank', 'width=400,height=600');
-      if (!w) return;
-
-      w.document.open();
-      w.document.write(html);
-
-      // Inject auto-print + auto-close
-      w.document.write(`
-        <script>
+    this.orderService.printOrder(order.Id).subscribe({
+      next: (html: string) => {
+        const w = window.open('', '_blank', 'width=400,height=600');
+        if (!w) return;
+        w.document.write(html);
+        w.document.write(`<script>
           window.onload = function() {
             window.print();
             setTimeout(() => window.close(), 500);
           }
-        </script>
-      `);
+        </script>`);
+        w.document.close();
+      },
+      error: err => console.error('Print Error:', err)
+    });
+  }
 
-      w.document.close();
-    },
-    error: (err) => console.error('Print Error:', err)
-  });
-}
-
-shareBill(form: any) {
-  if (!form.valid || !this.selectedOrder) return;
-
-  const payload = {
-    name: this.customerName,
-    phone: this.customerPhone
-  };
-
-  this.orderService.shareOrder(this.selectedOrder.Id, payload).subscribe({
-    next: (res: any) => {
-      alert(res.message);
-      const modalEl = document.getElementById('shareBillModal');
-      if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        modal?.hide();
+  shareBill(form: any) {
+    if (!form.valid || !this.selectedOrder) return;
+    const payload = { name: this.customerName, phone: this.customerPhone };
+    this.orderService.shareOrder(this.selectedOrder.Id, payload).subscribe({
+      next: (res: any) => {
+        alert(res.message);
+        const modalEl = document.getElementById('shareBillModal');
+        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+        this.customerName = '';
+        this.customerPhone = '';
+      },
+      error: err => {
+        console.error('Share Bill Error:', err);
+        alert('Error sharing bill');
       }
-      this.customerName = '';
-      this.customerPhone = '';
-    },
-    error: (err) => {
-      console.error('Share Bill Error:', err);
-      alert('Error sharing bill');
-    }
-  });
-}
-
+    });
+  }
 }

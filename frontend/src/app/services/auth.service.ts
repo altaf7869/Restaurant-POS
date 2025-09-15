@@ -51,6 +51,12 @@ export class AuthService {
     return decoded ? decoded.role : null;
   }
 
+   getUserName(): string | null {
+    const decoded = this.decodeToken();
+    return decoded ? decoded.username : null;
+  }
+
+
   getUserId(): number | null {
     const decoded = this.decodeToken();
     return decoded ? decoded.id : null;

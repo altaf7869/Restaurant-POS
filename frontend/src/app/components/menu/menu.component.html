@@ -7,7 +7,8 @@
       <input type="text"
              class="form-control w-25"
              placeholder="Search menu..."
-             [(ngModel)]="searchText">
+             [(ngModel)]="searchText"
+             (ngModelChange)="applyFilter()">
     </div>
 
     <div class="card-body">
@@ -52,15 +53,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let m of menuItems | searchFilter:searchText:['Name','CategoryName','Price']">
+            <tr *ngFor="let m of pagedMenuItems">
               <td>{{m.Id}}</td>
               <td>{{m.Name}}</td>
               <td>{{m.Price | currency:'INR'}}</td>
               <td>{{m.CategoryName}}</td>
               <td>
-                <span class="badge"
-                      [class.bg-success]="m.IsActive"
-                      [class.bg-secondary]="!m.IsActive">
+                <span class="badge" [class.bg-success]="m.IsActive" [class.bg-secondary]="!m.IsActive">
                   {{ m.IsActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -69,12 +68,30 @@
                 <button class="btn btn-sm btn-danger" (click)="deleteMenu(m.Id)">Delete</button>
               </td>
             </tr>
-            <tr *ngIf="(menuItems | searchFilter:searchText:['Name','CategoryName','Price']).length === 0">
+            <tr *ngIf="pagedMenuItems.length === 0">
               <td colspan="6" class="text-center text-muted">No menu items found</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <nav *ngIf="totalPages > 1" class="mt-3">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" (click)="goToPage(currentPage - 1)">Prev</a>
+          </li>
+
+          <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+              [class.active]="currentPage === i + 1">
+            <a class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</a>
+          </li>
+
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" (click)="goToPage(currentPage + 1)">Next</a>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
 </div>

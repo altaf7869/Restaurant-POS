@@ -6,8 +6,6 @@ import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
 import { SearchFilterPipe } from '../../pipes/search-filter.pipe';
 
-
-
 @Component({
   selector: 'app-waiter',
   standalone: true,
@@ -16,10 +14,10 @@ import { SearchFilterPipe } from '../../pipes/search-filter.pipe';
   styleUrls: ['./waiter.component.css']
 })
 export class WaiterComponent implements OnInit {
-tables: any[] = [];
+  tables: any[] = [];
   categories: any[] = [];
   menu: any[] = [];
-searchText = '';
+  searchText = '';
 
   selectedTable: any = null;
   activeCategoryId: number | null = null;
@@ -36,76 +34,162 @@ searchText = '';
     this.loadCategories();
     this.loadMenu();
 
-    // Listen for updates (optional)
-    // this.socket.on<any>('orderUpdated').subscribe(updated => {
-    //   // handle if waiter should be notified (e.g., order status changes)
-    // });
-  }
+    // Subscribe to order map updates (persistent across screens)
+    this.orderService.getOrderMap$().subscribe(orderMap => {
+      if (this.selectedTable) {
+        this.orderItems = orderMap[this.selectedTable.Id] || [];
+      }
+    });
 
-  loadTables() {
-    this.api.getTables().subscribe(res => {
-      this.tables = res;
+    // Listen for socket updates (cashier paid)
+    this.socket.onEvent('orderUpdated').subscribe((updatedOrder: any) => {
+      this.loadTables();
+
+      const tableId = updatedOrder.TableId;
+
+      if (updatedOrder.Status === 'paid') {
+        // Clear cached order
+        this.orderService.clearTable(tableId);
+
+        // If currently selected table is this one, clear items
+        if (this.selectedTable?.Id === tableId) {
+          this.orderItems = [];
+          this.selectedTable = null;
+        }
+
+        // Mark table as Free
+        this.tables = this.tables.map(t =>
+          t.Id === tableId ? { ...t, Status: 'Free' } : t
+        );
+      }
     });
   }
 
-  loadCategories() { this.api.getCategories().subscribe(res => this.categories = res); }
-  loadMenu() { this.api.getMenu().subscribe(res => this.menu = res); }
+  /** Load all tables */
+  loadTables() {
+    this.api.getTables().subscribe(res => this.tables = res);
+  }
 
+  /** Load categories */
+  loadCategories() {
+    this.api.getCategories().subscribe(res => this.categories = res);
+  }
+
+  /** Load full menu */
+  loadMenu() {
+    this.api.getMenu().subscribe(res => this.menu = res);
+  }
+
+  /** Select table */
   selectTable(t: any) {
     this.selectedTable = t;
-    this.orderItems = [];
-    // Optionally load existing order for this table from backend (if you store one)
-  }
 
-  getFilteredMenu() {
-    if (!this.activeCategoryId) return this.menu;
-    return this.menu.filter(m => m.CategoryId === this.activeCategoryId);
-  }
+    // Mark table Occupied if Free
+    if (t.Status === 'Free') t.Status = 'Occupied';
 
-  addToOrder(item: any) {
-    const ex = this.orderItems.find(i => i.Id === item.Id);
-    if (ex) ex.qty++;
-    else this.orderItems.push({ ...item, qty: 1 });
-  }
-  increaseQty(i: any) { i.qty++; }
-  decreaseQty(i: any) { if (i.qty > 1) i.qty--; else this.removeItem(i); }
-  removeItem(it: any) { this.orderItems = this.orderItems.filter(x => x.Id !== it.Id); }
+    // Load cached order
+    this.orderItems = this.orderService.getOrderByTableId(t.Id);
 
-  getOrderTotal() { return this.orderItems.reduce((s, i) => s + i.Price * i.qty, 0); }
+    if (!this.orderItems.length) {
+      // Fetch from backend if nothing cached
+      this.orderService.getOrderByTable(t.Id).subscribe({
+        next: order => {
+          this.orderItems = order?.Items.map(i => ({ ...i, qty: i.qty || 1 })) || [];
+          this.orderService.setOrderForTable(t.Id, this.orderItems);
 
-  submitOrder() {
-  if (!this.selectedTable) { alert('Select table'); return; }
-  if (!this.orderItems.length) { alert('Add items'); return; }
-
-  const payload = {
-    TableId: this.selectedTable.Id, // match backend column
-    WaiterId: 1, // replace with actual waiter id from auth/session
-    Items: this.orderItems.map(i => ({
-      menuItemId: i.Id,
-      Name: i.Name,
-      Price: i.Price,
-      qty: i.qty
-    })),
-    Total: this.getOrderTotal(),
-    Status: 'pending'
-  };
-
-  this.orderService.createOrder(payload).subscribe({
-    next: (res) => {
-      alert('Order submitted');
-      // mark table occupied locally
-      this.tables = this.tables.map(t => t.Id === this.selectedTable.Id ? { ...t, IsActive: true, isOccupied: true } : t);
-      this.selectedTable = null;
-      this.orderItems = [];
-    },
-    error: (err) => {
-      console.error(err);
-      alert('Order failed');
+          if (this.orderItems.length) t.Status = 'Occupied';
+        },
+        error: () => {
+          this.orderItems = [];
+          this.orderService.setOrderForTable(t.Id, []);
+        }
+      });
     }
-  });
-}
+  }
 
+  /** Filter menu by category */
+  getFilteredMenu() {
+    return this.activeCategoryId
+      ? this.menu.filter(m => m.CategoryId === this.activeCategoryId)
+      : this.menu;
+  }
 
+  /** Add item to order */
+  addToOrder(item: any) {
+    const existing = this.orderItems.find(i => i.Id === item.Id);
+    if (existing) existing.qty++;
+    else this.orderItems.push({ ...item, qty: 1 });
+
+    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+
+    // Mark table Occupied if Free
+    this.tables = this.tables.map(t =>
+      t.Id === this.selectedTable.Id && t.Status === 'Free'
+        ? { ...t, Status: 'Occupied' }
+        : t
+    );
+  }
+
+  increaseQty(i: any) {
+    i.qty++;
+    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+  }
+
+  decreaseQty(i: any) {
+    if (i.qty > 1) i.qty--;
+    else this.removeItem(i);
+
+    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+  }
+
+  removeItem(it: any) {
+    this.orderItems = this.orderItems.filter(x => x.Id !== it.Id);
+    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+  }
+
+  /** Calculate total */
+  getOrderTotal() {
+    return this.orderItems.reduce((sum, i) => sum + i.Price * i.qty, 0);
+  }
+
+  /** Submit order */
+  submitOrder() {
+    if (!this.selectedTable) { alert('Select table'); return; }
+    if (!this.orderItems.length) { alert('Add items'); return; }
+
+    const payload = {
+      TableId: this.selectedTable.Id,
+      WaiterId: 1,
+      Items: this.orderItems.map(i => ({
+        menuItemId: i.Id,
+        Name: i.Name,
+        Price: i.Price,
+        qty: i.qty
+      })),
+      Total: this.getOrderTotal(),
+      Status: 'pending'
+    };
+
+    this.orderService.createOrder(payload).subscribe({
+      next: () => {
+        alert('Order submitted');
+
+        // Mark table as pending
+        this.tables = this.tables.map(t =>
+          t.Id === this.selectedTable.Id ? { ...t, Status: 'pending' } : t
+        );
+
+        this.orderItems = [];
+        this.selectedTable = null;
+      },
+      error: err => {
+        console.error(err);
+        alert('Order failed');
+      }
+    });
+  }
+
+  /** Print preview */
   printPreview(orderId?: number) {
     if (!orderId) return;
     this.orderService.printOrder(orderId).subscribe(html => {
@@ -117,42 +201,29 @@ searchText = '';
     });
   }
 
+  /** Kitchen print */
   printForKitchen() {
-  if (!this.orderItems || this.orderItems.length === 0) {
-    console.warn('No items to print for kitchen');
-    return;
+    if (!this.orderItems.length) return;
+
+    this.orderService.kitchenPrint(this.selectedTable.TableNumber, this.orderItems)
+      .subscribe({
+        next: html => {
+          const w = window.open('', '_blank', 'width=400,height=600');
+          if (!w) return;
+          w.document.open();
+          w.document.write(html);
+          w.document.write(`
+            <script>
+              window.onload = function() {
+                window.focus();
+                window.print();
+                setTimeout(() => window.close(), 800);
+              }
+            </script>
+          `);
+          w.document.close();
+        },
+        error: err => console.error('Kitchen Print API Error:', err)
+      });
   }
-
-  this.orderService.kitchenPrint(this.selectedTable.TableNumber, this.orderItems)
-    .subscribe({
-      next: (html: string) => {
-        const printWindow = window.open('', '_blank', 'width=400,height=600');
-        if (!printWindow) {
-          console.error('Failed to open print window');
-          return;
-        }
-
-        printWindow.document.open();
-        printWindow.document.write(html);
-
-        // Use window.onload so styles and DOM are fully ready before printing
-        printWindow.document.write(`
-          <script>
-            window.onload = function() {
-              window.focus();
-              window.print();
-              setTimeout(() => window.close(), 800);
-            }
-          </script>
-        `);
-
-        printWindow.document.close();
-      },
-      error: (err) => {
-        console.error('Kitchen Print API Error:', err);
-      }
-    });
-}
-
-
 }

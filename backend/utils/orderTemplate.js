@@ -11,6 +11,7 @@ function generateOrderHtml(order) {
         }
       })();
 
+  // Build table rows
   const rows = items.map((item, i) => {
     const price = Number(item.Price) || 0;
     const qty = Number(item.qty) || 0;
@@ -27,9 +28,19 @@ function generateOrderHtml(order) {
     `;
   }).join('');
 
-  const orderTotal =
-    Number(order.Total) ||
-    items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.qty) || 0), 0);
+  // Subtotal
+  const subtotal = items.reduce((sum, i) => sum + (Number(i.Price) || 0) * (Number(i.qty) || 0), 0);
+
+  // Ensure discount is always a number
+  const discountPercent = Number(order.DiscountPercent) || 0;
+  const discountAmount = subtotal * discountPercent / 100;
+
+  // GST
+  const gstPercent = Number(order.GST) || 0;
+  const gstAmount = (subtotal - discountAmount) * (gstPercent / 100);
+
+  // Grand total
+  const grandTotal = subtotal - discountAmount + gstAmount;
 
   const logoUrl = 'http://192.168.1.201:3000/assets/ss_logo.png';
 
@@ -39,14 +50,12 @@ function generateOrderHtml(order) {
   <head>
     <meta charset="utf-8">
     <title>Order #${order.Id || ''}</title>
-    <!-- ✅ Google Fonts for fancy cursive style -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
       body { font-family: Arial, sans-serif; margin: 0; padding: 0; font-size: 13px; }
       .container { width: 80mm; margin: 0 auto; text-align: center; }
       .logo img { max-width: 70px; margin: 8px auto; display: block; }
       .restaurant-name { margin: 5px 0 0; font-size: 20px; font-weight: bold; text-transform: uppercase; }
-    
       .order-meta { margin: 6px 0; font-size: 13px; }
       table { width: 100%; border-collapse: collapse; margin-top: 10px; }
       th, td { border-bottom: 1px dashed #aaa; }
@@ -59,25 +68,18 @@ function generateOrderHtml(order) {
   </head>
   <body>
     <div class="container">
-      <!-- Logo -->
       <div class="logo">
         <img src="${logoUrl}" alt="S S Kitchen Logo">
       </div>
 
-      <!-- Restaurant Name -->
-      <h2 class="restaurant-name">
-        S S KITCHEN
-        <span class="tagline">Family Restaurant</span>
-      </h2>
+      <h2 class="restaurant-name">S S KITCHEN <span class="tagline">Family Restaurant</span></h2>
 
-      <!-- Order Details -->
       <div class="order-meta">
         <div><b>Order #:</b> ${order.Id || ''}</div>
         <div><b>Table:</b> ${order.TableId || ''} | <b>Waiter:</b> ${order.WaiterId || ''}</div>
         <div>${order.CreatedAt ? new Date(order.CreatedAt).toLocaleString() : ''}</div>
       </div>
 
-      <!-- Items Table -->
       <table>
         <thead>
           <tr>
@@ -91,15 +93,31 @@ function generateOrderHtml(order) {
         <tbody>
           ${rows}
         </tbody>
-        <tfoot>
+       <tfoot>
           <tr class="total-row">
-            <td colspan="4" style="text-align:right;">Total</td>
-            <td style="text-align:right;">${orderTotal.toFixed(2)}</td>
+            <td colspan="4" style="text-align:right;">Subtotal</td>
+            <td style="text-align:right;">${subtotal.toFixed(2)}</td>
+          </tr>
+
+          ${discountPercent > 0 ? `
+            <tr class="total-row">
+              <td colspan="4" style="text-align:right;">Discount (${discountPercent}%)</td>
+              <td style="text-align:right;">-${discountAmount.toFixed(2)}</td>
+            </tr>
+          ` : ''}
+
+          <tr class="total-row">
+            <td colspan="4" style="text-align:right;">GST (${gstPercent}%)</td>
+            <td style="text-align:right;">${gstAmount.toFixed(2)}</td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="4" style="text-align:right;">Grand Total</td>
+            <td style="text-align:right;">${grandTotal.toFixed(2)}</td>
           </tr>
         </tfoot>
+
       </table>
 
-      <!-- Footer -->
       <div class="footer">
         <p>Thank you for dining with us!</p>
         <p>Visit Again ❤️</p>

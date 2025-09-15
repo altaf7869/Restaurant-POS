@@ -1,8 +1,16 @@
-.cursor-pointer {
-  cursor: pointer;
-  transition: transform 0.1s ease-in-out;
+/* Hover effect for menu items */
+.hover-scale {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-scale:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
 }
 
-.cursor-pointer:hover {
-  transform: scale(1.03);
+/* Small card style for tables */
+.card.cursor-pointer {
+  transition: transform 0.2s ease;
+}
+.card.cursor-pointer:hover {
+  transform: scale(1.05);
 }

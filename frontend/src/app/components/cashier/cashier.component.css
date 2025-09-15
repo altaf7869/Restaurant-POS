@@ -1,0 +1,23 @@
+/* Hover effect for cards */
+  .hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+  }
+
+  /* Gradient for card header */
+  .bg-gradient {
+    background: linear-gradient(90deg, #007bff 0%, #00c6ff 100%);
+    color: white;
+  }
+
+  /* Rounded table */
+  table.table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* Badge for Table number */
+  .badge {
+    font-size: 0.9rem;
+  }
