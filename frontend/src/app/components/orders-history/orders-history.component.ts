@@ -52,6 +52,21 @@ fetchOrders() {
   });
 }
 
+// Total orders count
+get totalOrdersCount(): number {
+  return this.orders?.length || 0;
+}
+
+// Today's orders count
+get todaysOrdersCount(): number {
+  const today = new Date();
+  return this.filteredOrders?.filter(o => {
+    const orderDate = new Date(o.CreatedAt);
+    return orderDate.toDateString() === today.toDateString();
+  }).length || 0;
+}
+
+
   parseItems(items: any) {
     if (typeof items === 'string') {
       try {

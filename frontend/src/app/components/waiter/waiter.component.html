@@ -1,48 +1,47 @@
-<div class="container-fluid py-2">
+<div class="container-fluid py-3">
 
-  <!-- Table Grid -->
-  <div class="row g-2 mb-3 justify-content-start">
-    <div class="col-auto" *ngFor="let table of tables">
-      <div class="card text-center shadow-sm rounded cursor-pointer p-2 position-relative"
+  <!-- 🪑 Table Grid -->
+  <div class="row g-3 mb-4 justify-content-start">
+    <div class="col-6 col-sm-4 col-md-3 col-lg-auto" *ngFor="let table of tables">
+      <div class="card text-center shadow-sm rounded-3 p-3 position-relative cursor-pointer hover-scale"
            [ngClass]="{
-             'bg-success text-white': table.Status === 'paid',
-             'bg-danger text-white': table.Status === 'occupied',
-             'bg-warning text-dark': table.Status === 'pending'
+             'bg-success text-white': getTableStatus(table) === 'Paid' || getTableStatus(table) === 'Free',
+             'bg-danger text-white': getTableStatus(table) === 'occupied',
+             'bg-warning text-dark': getTableStatus(table) === 'pending'
            }"
-           (click)="selectTable(table)">
-        <h6 class="fw-bold mb-1 small">T {{ table.TableNumber }}</h6>
-        <span class="badge rounded-pill px-2 py-1"
+           (click)="selectTable(table)"
+           title="Click to select table">
+        <h6 class="fw-bold mb-1 small">🪑 T {{ table.TableNumber }}</h6>
+        <h6 class="fw-bold mb-2 small">👥 Seats {{ table.Seats }}</h6>
+        <span class="badge rounded-pill px-2 py-1 w-100"
               [ngClass]="{
-                'bg-light text-dark': table.Status === 'Free',
-                'bg-danger text-white': table.Status === 'occupied',
-                'bg-warning text-dark': table.Status === 'pending'
-              }">{{ table.Status | titlecase }}</span>
+                'bg-light text-dark': getTableStatus(table) === 'Free',
+                'bg-danger text-white': getTableStatus(table) === 'occupied',
+                'bg-warning text-dark': getTableStatus(table) === 'pending'
+              }">
+          {{ getTableStatus(table) | titlecase }}
+        </span>
       </div>
     </div>
   </div>
 
-  <!-- Main Layout: Left = Menu, Right = Order -->
+  <!-- 🍽 Main Layout -->
   <div class="row">
 
-    <!-- Left Side: Menu & Selected Table -->
-    <div class="col-lg-8 mb-3">
+    <!-- 📋 Left Side: Menu -->
+    <div class="col-12 col-lg-8 mb-4">
 
       <!-- Selected Table Info -->
-      <div *ngIf="selectedTable" class="mb-2">
-        <div class="alert alert-info rounded-pill text-center fw-bold small">
+      <div *ngIf="selectedTable" class="mb-3">
+        <div class="alert alert-info rounded-pill text-center fw-bold small sticky-top" style="top: 0; z-index: 10;">
           🍽 Selected Table: <span class="text-primary">{{ selectedTable.TableNumber }}</span>
-        </div>
-
-        <!-- Menu Search -->
-        <div class="mb-2 d-flex justify-content-center">
-          <input type="text" class="form-control form-control-sm w-50"
-                 placeholder="Search menu..." [(ngModel)]="searchText">
+          <span class="badge bg-secondary ms-2">{{ getTableStatus(selectedTable) }}</span>
         </div>
 
         <!-- Category Pills -->
-        <div class="d-flex flex-wrap justify-content-start mb-3">
+        <div class="d-flex flex-wrap gap-2 overflow-auto mb-3">
           <button *ngFor="let c of categories"
-                  class="btn btn-sm me-2 mb-2"
+                  class="btn btn-sm flex-fill flex-sm-auto"
                   [class.btn-primary]="c.Id === activeCategoryId"
                   [class.btn-outline-primary]="c.Id !== activeCategoryId"
                   (click)="activeCategoryId = c.Id">
@@ -50,52 +49,65 @@
           </button>
         </div>
 
-        <!-- Menu Items Grid -->
-        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-2">
+        <!-- Menu Search -->
+        <div class="mb-3">
+          <input type="text" class="form-control form-control-sm w-100 w-sm-75 mx-auto"
+                 placeholder="🔍 Search menu..." [(ngModel)]="searchText">
+        </div>
+
+        <!-- 🍔 Menu Items Grid -->
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
           <div class="col" *ngFor="let item of getFilteredMenu() | searchFilter:searchText:['Name','Price']">
             <div class="card shadow-sm rounded h-100 text-center p-2 cursor-pointer hover-scale"
                  (click)="addToOrder(item)">
-              <div class="card-body p-2">
-                <h6 class="fw-bold mb-1 small">{{ item.Name }}</h6>
-                <span class="text-success fw-bold small">{{ item.Price | currency:'INR' }}</span>
+              <div class="card-body p-2 d-flex flex-column justify-content-between">
+                <h6 class="fw-bold mb-2 small" style="word-break: break-word;">
+                  {{ item.Name }}
+                </h6>
+                <span class="text-success fw-bold small mt-auto">
+                  ₹{{ item.Price }}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- Right Side: Order Panel -->
-    <div class="col-lg-4 mb-3" *ngIf="selectedTable && orderItems.length > 0">
+    <!-- 🧾 Right Side: Order Panel -->
+    <div class="col-lg-4 mb-4" *ngIf="selectedTable && orderItems.length > 0">
       <div class="card shadow-lg rounded-3 sticky-top" style="top: 20px;">
+        
+        <!-- Header -->
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-          <span>🧾 Current Order</span>
-          <button class="btn btn-sm btn-light" (click)="orderItems = []">Clear</button>
+          <span>🧾 Current Order ({{ orderItems.length }} items)</span>
+          <button class="btn btn-sm btn-light" (click)="orderItems = []">🗑 Clear</button>
         </div>
 
-        <div class="card-body p-2 table-responsive" style="max-height: 60vh; overflow-y:auto;">
-          <table class="table table-sm align-middle mb-0 table-bordered">
-            <tbody>
-              <tr *ngFor="let item of orderItems">
-                <td class="fw-bold small">{{ item.Name }}</td>
-                <td class="text-center">
-                  <button class="btn btn-sm btn-outline-secondary me-1 py-0 px-1" (click)="decreaseQty(item)">-</button>
-                  <span class="fw-bold small">{{ item.qty }}</span>
-                  <button class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1" (click)="increaseQty(item)">+</button>
-                </td>
-                <td class="text-end small">{{ item.Price * item.qty | currency:'INR' }}</td>
-                <td class="text-center">
-                  <button class="btn btn-sm btn-danger rounded-circle py-0 px-1" (click)="removeItem(item)">✕</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Body -->
+        <div class="card-body p-2" style="max-height: 60vh; overflow-y:auto;">
+          <div *ngFor="let item of orderItems" class="d-flex flex-wrap align-items-center justify-content-between mb-2 p-2 border rounded">
+            <div class="fw-bold me-2" style="flex: 1 1 100%; word-break: break-word;">
+              {{ item.Name }}
+            </div>
+            <div class="d-flex align-items-center gap-1 me-2 mt-1 mt-md-0">
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="decreaseQty(item)">−</button>
+              <span class="px-2 fw-bold">{{ item.qty }}</span>
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2" (click)="increaseQty(item)">＋</button>
+            </div>
+            <div class="fw-bold text-end me-2 mt-1 mt-md-0" style="min-width: 70px;">
+              ₹{{ item.Price * item.qty }}
+            </div>
+            <div class="mt-1 mt-md-0">
+              <button class="btn btn-sm btn-danger py-0 px-2" (click)="removeItem(item)">✕</button>
+            </div>
+          </div>
         </div>
 
+        <!-- Footer -->
         <div class="card-footer bg-light text-end">
           <h6 class="fw-bold text-success mb-2">
-            Total: {{ getOrderTotal() | currency:'INR' }}
+            Total: ₹{{ getOrderTotal() }}
           </h6>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-warning btn-sm flex-fill py-1" (click)="printForKitchen()">

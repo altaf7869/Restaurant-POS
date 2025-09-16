@@ -1,27 +1,56 @@
-
-
-/* Make navbar links visually nice */
+/* ===== Navbar Styling ===== */
 .navbar-nav .nav-link {
   font-weight: 500;
   margin-right: 1rem;
+  color: #f8f9fa !important;
+  transition: all 0.2s ease-in-out;
+  padding: 0.5rem 0.75rem;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
 }
 
 .navbar-nav .nav-link.active {
   background-color: #495057;
-  border-radius: 0.25rem;
+  border-radius: 0.4rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Ensure main content is below fixed navbar */
 main {
-  padding-top: 70px; /* height of navbar */
+  padding-top: 80px; /* Slightly more spacing for better breathing room */
+  background-color: #f8f9fa; /* Light background for POS dashboard */
+  min-height: 100vh;
 }
 
-/* Cards styling */
+/* ===== Card Styling ===== */
 .card {
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Responsive adjustments */
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Buttons ===== */
+.btn-outline-light {
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-light:hover {
+  background-color: #ffffff;
+  color: #000000;
+  transform: scale(1.05);
+}
+
+/* ===== Responsive Adjustments ===== */
 @media (max-width: 991px) {
   .navbar-nav {
     margin-top: 0.5rem;

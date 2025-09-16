@@ -27,6 +27,9 @@ app.use('/api/tables', require('./routes/tableRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+
+
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Start server

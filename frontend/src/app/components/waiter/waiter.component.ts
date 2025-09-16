@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrderService } from '../../services/order.service';
@@ -22,11 +22,13 @@ export class WaiterComponent implements OnInit {
   selectedTable: any = null;
   activeCategoryId: number | null = null;
   orderItems: any[] = [];
+orderMap: { [tableId: number]: any[] } = {};
 
   constructor(
     private api: ApiService,
     private orderService: OrderService,
-    private socket: SocketService
+    private socket: SocketService,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -36,6 +38,7 @@ export class WaiterComponent implements OnInit {
 
     // Subscribe to order map updates (persistent across screens)
     this.orderService.getOrderMap$().subscribe(orderMap => {
+      this.orderMap = orderMap;
       if (this.selectedTable) {
         this.orderItems = orderMap[this.selectedTable.Id] || [];
       }
@@ -47,7 +50,7 @@ export class WaiterComponent implements OnInit {
 
       const tableId = updatedOrder.TableId;
 
-      if (updatedOrder.Status === 'paid') {
+      if (updatedOrder.Status === 'Paid') {
         // Clear cached order
         this.orderService.clearTable(tableId);
 
@@ -62,18 +65,59 @@ export class WaiterComponent implements OnInit {
           t.Id === tableId ? { ...t, Status: 'Free' } : t
         );
       }
+
+      
     });
+
+   
   }
 
   /** Load all tables */
   loadTables() {
-    this.api.getTables().subscribe(res => this.tables = res);
+    this.api.getTables().subscribe((res:any) => 
+      this.tables = res
+    );
   }
 
-  /** Load categories */
-  loadCategories() {
-    this.api.getCategories().subscribe(res => this.categories = res);
-  }
+getTableStatus(table: any): string {
+  const items = this.orderMap?.[table.Id] || [];
+
+  if (items.length === 0) return 'Free'; // No items → Free
+
+  const hasPending = items.some(item => item.Status?.toLowerCase() === 'pending');
+  const allPaid = items.length > 0 && items.every(item => item.Status?.toLowerCase() === 'paid');
+
+  if (hasPending) return 'pending';
+  if (allPaid) return 'Free'; // All paid → Free
+
+  return 'occupied'; // Items exist, not paid → Occupied
+}
+
+
+
+/** Load categories and set default active category */
+loadCategories() {
+  this.api.getCategories().subscribe({
+    next: (res) => {
+      this.categories = res || [];
+
+      // ✅ Select the first category by default
+      if (this.categories.length > 0) {
+        // Option 1: Default to first category
+        this.activeCategoryId = this.categories[0].Id;
+
+        // Option 2: Default to 'Starter' category if it exists
+        const starter = this.categories.find(c => c.Name.toLowerCase() === 'Tandoori Starter');
+        if (starter) this.activeCategoryId = starter.Id;
+      }
+    },
+    error: (err) => {
+      console.error('Failed to load categories:', err);
+      this.categories = [];
+      this.activeCategoryId = null;
+    }
+  });
+}
 
   /** Load full menu */
   loadMenu() {

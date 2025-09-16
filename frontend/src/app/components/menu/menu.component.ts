@@ -22,7 +22,7 @@ export class MenuComponent implements OnInit {
 
   // Pagination
   currentPage: number = 1;
-  itemsPerPage: number = 5;
+  itemsPerPage: number = 10;
   totalPages: number = 0;
 
   constructor(private api: ApiService, private fb: FormBuilder) {

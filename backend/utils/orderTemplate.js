@@ -1,4 +1,3 @@
-// utils/orderTemplate.js
 function generateOrderHtml(order) {
   const items = Array.isArray(order.Items)
     ? order.Items
@@ -11,38 +10,41 @@ function generateOrderHtml(order) {
         }
       })();
 
-  // Build table rows
-  const rows = items.map((item, i) => {
-    const price = Number(item.Price) || 0;
-    const qty = Number(item.qty) || 0;
-    const total = price * qty;
+  const rows = items
+    .map((item, i) => {
+      const price = Number(item.Price) || 0;
+      const qty = Number(item.qty) || 0;
+      const total = price * qty;
 
-    return `
+      return `
       <tr>
-        <td style="padding: 6px; text-align: center;">${i + 1}</td>
-        <td style="padding: 6px;">${item.Name || ''}</td>
-        <td style="padding: 6px; text-align: center;">${qty}</td>
-        <td style="padding: 6px; text-align: right;">${price.toFixed(2)}</td>
-        <td style="padding: 6px; text-align: right;">${total.toFixed(2)}</td>
+        <td style="padding:1px; text-align:center;">${i + 1}</td>
+        <td style="padding:1px; text-align:left;">${item.Name || ''}</td>
+        <td style="padding:1px; text-align:center;">${qty}</td>
+        <td style="padding:1px; text-align:right;">${Math.round(price)}</td>
+        <td style="padding:1px; text-align:right;">${Math.round(total)}</td>
       </tr>
     `;
-  }).join('');
+    })
+    .join('');
 
-  // Subtotal
-  const subtotal = items.reduce((sum, i) => sum + (Number(i.Price) || 0) * (Number(i.qty) || 0), 0);
-
-  // Ensure discount is always a number
+  const subtotal = Math.round(items.reduce((sum, i) => sum + (Number(i.Price) || 0) * (Number(i.qty) || 0), 0));
   const discountPercent = Number(order.DiscountPercent) || 0;
-  const discountAmount = subtotal * discountPercent / 100;
-
-  // GST
+  const discountAmount = Math.round((subtotal * discountPercent) / 100);
   const gstPercent = Number(order.GST) || 0;
-  const gstAmount = (subtotal - discountAmount) * (gstPercent / 100);
-
-  // Grand total
+  const gstAmount = Math.round((subtotal - discountAmount) * (gstPercent / 100));
   const grandTotal = subtotal - discountAmount + gstAmount;
 
   const logoUrl = 'http://192.168.1.201:3000/assets/ss_logo.png';
+  const formattedDate = new Date(order.CreatedAt || Date.now()).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour12: true,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return `
   <!DOCTYPE html>
@@ -50,34 +52,37 @@ function generateOrderHtml(order) {
   <head>
     <meta charset="utf-8">
     <title>Order #${order.Id || ''}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
-      body { font-family: Arial, sans-serif; margin: 0; padding: 0; font-size: 13px; }
-      .container { width: 80mm; margin: 0 auto; text-align: center; }
-      .logo img { max-width: 70px; margin: 8px auto; display: block; }
-      .restaurant-name { margin: 5px 0 0; font-size: 20px; font-weight: bold; text-transform: uppercase; }
-      .order-meta { margin: 6px 0; font-size: 13px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-      th, td { border-bottom: 1px dashed #aaa; }
-      th { font-weight: bold; padding: 6px; text-align: center; }
-      td { font-size: 13px; }
-      tfoot td { font-weight: bold; border-top: 1px solid #000; padding-top: 8px; }
-      .total-row td { font-size: 14px; }
-      .footer { margin-top: 10px; font-size: 12px; text-align: center; }
+      body { font-family: monospace; margin:0; padding:0; font-size:9px; }
+      .container { width: 55mm; margin:0 auto; text-align:center; } /* narrower for 58mm printer */
+      .logo img { max-width:40px; margin:2px auto; display:block; }
+      .restaurant-name { margin:2px 0; font-size:12px; font-weight:bold; text-transform:uppercase; }
+      .address { font-size:8px; line-height:1.2; margin-bottom:2px; }
+      .order-meta { margin:2px 0; font-size:9px; }
+      table { width:100%; border-collapse: collapse; margin-top:2px; }
+      th, td { border-bottom: 1px dashed #aaa; font-size:9px; padding:1px; }
+      th { font-weight:bold; }
+      tfoot td { font-weight:bold; border-top:1px solid #000; padding-top:2px; }
+      .total-row td { font-size:10px; }
+      .footer { margin-top:2px; font-size:8px; text-align:center; }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="logo">
-        <img src="${logoUrl}" alt="S S Kitchen Logo">
+        <img src="${logoUrl}" alt="Logo">
       </div>
 
-      <h2 class="restaurant-name">S S KITCHEN <span class="tagline">Family Restaurant</span></h2>
+      <h2 class="restaurant-name">S S KITCHEN</h2>
+      <div class="address">
+        30, Saptagiri Complex, Opp. Hotel Taj Vivanta,<br>
+        Akota Garden Main Road, Akota, Vadodara
+      </div>
 
       <div class="order-meta">
         <div><b>Order #:</b> ${order.Id || ''}</div>
         <div><b>Table:</b> ${order.TableId || ''} | <b>Waiter:</b> ${order.WaiterId || ''}</div>
-        <div>${order.CreatedAt ? new Date(order.CreatedAt).toLocaleString() : ''}</div>
+        <div><b>Date:</b> ${formattedDate}</div>
       </div>
 
       <table>
@@ -93,29 +98,28 @@ function generateOrderHtml(order) {
         <tbody>
           ${rows}
         </tbody>
-       <tfoot>
+        <tfoot>
           <tr class="total-row">
             <td colspan="4" style="text-align:right;">Subtotal</td>
-            <td style="text-align:right;">${subtotal.toFixed(2)}</td>
+            <td style="text-align:right;">${subtotal}</td>
           </tr>
 
           ${discountPercent > 0 ? `
             <tr class="total-row">
               <td colspan="4" style="text-align:right;">Discount (${discountPercent}%)</td>
-              <td style="text-align:right;">-${discountAmount.toFixed(2)}</td>
+              <td style="text-align:right;">-${discountAmount}</td>
             </tr>
           ` : ''}
 
           <tr class="total-row">
             <td colspan="4" style="text-align:right;">GST (${gstPercent}%)</td>
-            <td style="text-align:right;">${gstAmount.toFixed(2)}</td>
+            <td style="text-align:right;">${gstAmount}</td>
           </tr>
           <tr class="total-row">
             <td colspan="4" style="text-align:right;">Grand Total</td>
-            <td style="text-align:right;">${grandTotal.toFixed(2)}</td>
+            <td style="text-align:right;">${grandTotal}</td>
           </tr>
         </tfoot>
-
       </table>
 
       <div class="footer">

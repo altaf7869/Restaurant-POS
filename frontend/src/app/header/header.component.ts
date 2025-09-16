@@ -14,6 +14,11 @@ export class HeaderComponent implements AfterViewInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  loggedInUsername:any;
+
+  ngOnInit(){
+    this.loggedInUsername = this.authService.getUserName();
+  }
   ngAfterViewInit(): void {
     const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
     const navbarCollapse = document.querySelector('.navbar-collapse');
