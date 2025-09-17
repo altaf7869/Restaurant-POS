@@ -1,6 +1,6 @@
 .main-content {
   margin-top: 0px; /* same as navbar height */
   padding: 1rem;     /* optional spacing */
-  min-height: calc(100vh - 70px); /* full viewport minus navbar */
+  min-height: calc(100vh - 50px); /* full viewport minus navbar */
   background-color: #f8f9fa;      /* optional background */
 }

@@ -1,63 +1,78 @@
 <div class="container mt-4">
-  <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h4 class="mb-0">Manage Categories</h4>
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+      <h4 class="mb-2 mb-md-0">
+        <i class="bi bi-tags-fill me-2"></i>Manage Categories
+      </h4>
 
       <!-- Search Filter -->
-      <input type="text"
-             class="form-control w-25"
-             placeholder="Search categories..."
-             [(ngModel)]="searchText">
+      <div class="input-group w-100 w-md-25">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text"
+               class="form-control"
+               placeholder="Search categories..."
+               [(ngModel)]="searchText">
+      </div>
     </div>
 
     <div class="card-body">
       <!-- Category Form -->
-      <form [formGroup]="categoryForm" (ngSubmit)="submitForm()" class="row g-2 mb-4">
+      <form [formGroup]="categoryForm" (ngSubmit)="submitForm()" class="row g-3 mb-4">
         <div class="col-12 col-md-8">
           <input type="text" class="form-control" placeholder="Category Name" formControlName="name">
         </div>
+
         <div class="col-12 col-md-2 d-flex align-items-center">
           <div class="form-check">
             <input type="checkbox" class="form-check-input" formControlName="isActive" id="isActive">
             <label class="form-check-label ms-1" for="isActive">Active</label>
           </div>
         </div>
+
         <div class="col-12 col-md-2 d-grid">
           <button type="submit" class="btn btn-success">
+            <i class="bi" [ngClass]="editMode ? 'bi-arrow-repeat' : 'bi-plus-circle'"></i>
             {{ editMode ? 'Update' : 'Add' }}
           </button>
         </div>
       </form>
 
-      <!-- Categories List -->
+      <!-- Categories Table -->
       <div class="table-responsive">
-        <table class="table table-bordered table-striped align-middle">
-          <thead class="table-dark">
+        <table class="table table-hover table-bordered align-middle text-center">
+          <thead class="table-dark sticky-top">
             <tr>
-              <th>ID</th>
-              <th>Category Name</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th scope="col">ID</th>
+              <th scope="col">Category Name</th>
+              <th scope="col">Status</th>
+              <th scope="col" style="width: 120px;">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let c of categories | searchFilter:searchText:['Name']">
-              <td>{{c.Id}}</td>
-              <td>{{c.Name}}</td>
+              <td>{{ c.Id }}</td>
+              <td class="text-start">{{ c.Name }}</td>
               <td>
-                <span class="badge"
+                <span class="badge px-3 py-2"
                       [class.bg-success]="c.IsActive"
                       [class.bg-secondary]="!c.IsActive">
+                  <i class="bi" [ngClass]="c.IsActive ? 'bi-check-circle' : 'bi-x-circle'"></i>
                   {{ c.IsActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td>
-                <button class="btn btn-sm btn-warning me-1 mb-1 mb-md-0" (click)="editCategory(c)">Edit</button>
-                <button class="btn btn-sm btn-danger" (click)="deleteCategory(c.Id)">Delete</button>
+                <button class="btn btn-warning btn-sm me-1" (click)="editCategory(c)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" (click)="deleteCategory(c.Id)">
+                  <i class="bi bi-trash"></i>
+                </button>
               </td>
             </tr>
             <tr *ngIf="(categories | searchFilter:searchText:['Name']).length === 0">
-              <td colspan="4" class="text-center text-muted">No categories found</td>
+              <td colspan="4" class="text-center text-muted py-3">
+                <i class="bi bi-info-circle me-2"></i>No categories found
+              </td>
             </tr>
           </tbody>
         </table>

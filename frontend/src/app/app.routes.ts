@@ -13,18 +13,23 @@ import { OrdersHistoryComponent } from './components/orders-history/orders-histo
 import { PaymentHistoryComponent } from './components/payment-history/payment-history.component';
 
 export const routes: Routes = [
+  // 🔑 Public routes
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+
+  // 👥 Admin-only routes
   { path: 'users', component: UserComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'categories', component: CategoriesComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'menu', component: MenuComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'tables', component: TableComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'order-history', component: OrdersHistoryComponent, canActivate: [AuthGuard, AdminGuard] },
+  { path: 'payment-history', component: PaymentHistoryComponent, canActivate: [AuthGuard, AdminGuard] },
+
+  // 🍽️ Waiter & Cashier routes (just need to be logged in)
   { path: 'waiter', component: WaiterComponent, canActivate: [AuthGuard] },
-    { path: 'order-history', component: OrdersHistoryComponent, canActivate: [AuthGuard] },
-    { path: 'payment-history', component: PaymentHistoryComponent, canActivate: [AuthGuard] },
+  { path: 'cashier', component: CashierComponent, canActivate: [AuthGuard] },
 
-    { path: 'cashier', component: CashierComponent, canActivate: [AuthGuard] },
-
+  // 🔄 Default redirect
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }
 ];

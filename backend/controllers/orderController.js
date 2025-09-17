@@ -196,7 +196,7 @@ async function getOrderByTable(req, res) {
 /**
  * Share order via WhatsApp Cloud API
  */
-async function shareOrder(req, res) {
+ async function shareOrder(req, res) {
   try {
     const { phone } = req.body;
     const orderId = req.params.id;
@@ -210,13 +210,16 @@ async function shareOrder(req, res) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Generate PDF buffer using Puppeteer
-    const pdfBuffer = await generateOrderPdf(order); // ✅ Must return Buffer
+    // Generate PDF buffer
+    const pdfBuffer = await generateOrderPdf(order);
+    if (!pdfBuffer) {
+      return res.status(500).json({ message: "Failed to generate PDF" });
+    }
 
-    // Create HTTPS agent to bypass self-signed certificate issue (safe for internal use)
+    // HTTPS agent (ignore self-signed certs, if internal)
     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-    // Upload PDF to WhatsApp Cloud API to get media ID
+    // Upload PDF to WhatsApp Cloud API
     const mediaUploadRes = await axios.post(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
       pdfBuffer,
@@ -225,20 +228,19 @@ async function shareOrder(req, res) {
           Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
           'Content-Type': 'application/pdf'
         },
-        params: {
-          messaging_product: 'whatsapp'
-        },
-        httpsAgent
+        params: { messaging_product: 'whatsapp' },
+        httpsAgent,
+        responseType: 'json'
       }
     );
 
-    const mediaId = mediaUploadRes.data.id;
+    const mediaId = mediaUploadRes.data?.id;
     if (!mediaId) {
-      throw new Error('Failed to upload PDF to WhatsApp');
+      return res.status(500).json({ message: "Failed to upload PDF to WhatsApp" });
     }
 
-    // Send the document using media ID
-    await axios.post(
+    // Send PDF message
+    const sendMsgRes = await axios.post(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: 'whatsapp',
@@ -246,7 +248,7 @@ async function shareOrder(req, res) {
         type: 'document',
         document: {
           id: mediaId,
-          caption: `Your Bill #${order.Id}`,
+          caption: `🧾 Your Bill #${order.Id}`,
           filename: `order-${order.Id}.pdf`
         }
       },
@@ -255,15 +257,16 @@ async function shareOrder(req, res) {
           Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        httpsAgent
+        httpsAgent,
+        responseType: 'json'
       }
     );
 
-    res.json({ message: "Order shared on WhatsApp!" });
+    res.json({ message: "Order shared on WhatsApp!", data: sendMsgRes.data });
 
   } catch (err) {
     console.error("Share Order Error:", err.response?.data || err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.response?.data || err.message });
   }
 }
 

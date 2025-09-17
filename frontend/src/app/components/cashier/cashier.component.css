@@ -1,23 +1,25 @@
-/* Hover effect for cards */
-  .hover-shadow:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
-  }
+.order-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.order-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
 
-  /* Gradient for card header */
-  .bg-gradient {
-    background: linear-gradient(90deg, #007bff 0%, #00c6ff 100%);
-    color: white;
-  }
+.order-table th, .order-table td {
+  vertical-align: middle !important;
+}
 
-  /* Rounded table */
-  table.table {
-    border-radius: 8px;
-    overflow: hidden;
-  }
+.hover-scale {
+  transition: transform 0.2s;
+}
+.hover-scale:hover {
+  transform: scale(1.05);
+}
 
-  /* Badge for Table number */
-  .badge {
-    font-size: 0.9rem;
-  }
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover,
+.btn-outline-secondary:hover {
+  color: #fff;
+}

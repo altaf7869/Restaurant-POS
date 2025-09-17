@@ -28,19 +28,17 @@ export class LoginComponent {
   }
 
   submitForm() {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
-
-    const { username, password } = this.loginForm.value;
-    this.auth.login(username, password).subscribe({
-      next: () => {
-        this.router.navigate(['/users']); // redirect after login
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'Invalid username or password';
-      }
-    });
+  if (this.loginForm.invalid) {
+    this.loginForm.markAllAsTouched();
+    return;
   }
+
+  const { username, password } = this.loginForm.value;
+  this.auth.login(username, password).subscribe({
+    error: (err) => {
+      this.errorMessage = err.error?.message || 'Invalid username or password';
+    }
+  });
+}
+
 }

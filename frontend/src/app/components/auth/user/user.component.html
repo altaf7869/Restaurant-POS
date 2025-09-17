@@ -1,11 +1,12 @@
 <div class="container mt-4">
-  <div class="card shadow-sm">
+  <div class="card shadow-sm border-0 rounded-3">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h4 class="mb-0">Users Management</h4>
+      <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Users Management</h4>
     </div>
+
     <div class="card-body">
       <!-- User Form -->
-      <form [formGroup]="userForm" (ngSubmit)="submitForm()" class="row g-2 mb-4">
+      <form [formGroup]="userForm" (ngSubmit)="submitForm()" class="row g-3 mb-4">
         <div class="col-12 col-md-3">
           <input type="text" class="form-control" placeholder="Username" formControlName="username">
         </div>
@@ -17,48 +18,61 @@
         </div>
         <div class="col-12 col-md-2">
           <select class="form-select" formControlName="role">
-            <option *ngFor="let r of roles" [value]="r">{{r}}</option>
+            <option value="" disabled>Select Role</option>
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
           </select>
         </div>
         <div class="col-12 col-md-1 d-grid">
-          <button type="submit" class="btn btn-success">{{editMode ? 'Update' : 'Add'}}</button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi" [ngClass]="editMode ? 'bi-arrow-repeat' : 'bi-plus-circle'"></i>
+            {{ editMode ? 'Update' : 'Add' }}
+          </button>
         </div>
       </form>
 
+      <!-- Search Bar -->
+      <div class="input-group mb-3 w-100 w-md-50">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text"
+               class="form-control"
+               placeholder="Search users..."
+               [(ngModel)]="searchText">
+      </div>
+
       <!-- Users Table -->
       <div class="table-responsive">
-        <!-- users.component.html -->
-<input type="text"
-       class="form-control w-25 mb-3"
-       placeholder="Search users..."
-       [(ngModel)]="searchText">
-
-<table class="table table-bordered table-striped align-middle">
-  <thead class="table-dark">
-    <tr>
-      <th>ID</th>
-      <th>Username</th>
-      <th>Full Name</th>
-      <th>Role</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let u of users | searchFilter:searchText:['Username','FullName','Role']">
-      <td>{{u.Id}}</td>
-      <td>{{u.Username}}</td>
-      <td>{{u.FullName}}</td>
-      <td>{{u.Role}}</td>
-      <td>
-        <button class="btn btn-sm btn-warning me-1 mb-1 mb-md-0" (click)="editUser(u)">Edit</button>
-        <button class="btn btn-sm btn-danger" (click)="deleteUser(u.Id)">Delete</button>
-      </td>
-    </tr>
-    <tr *ngIf="(users | searchFilter:searchText:['Username','FullName','Role']).length === 0">
-      <td colspan="5" class="text-center text-muted">No users found</td>
-    </tr>
-  </tbody>
-</table>
+        <table class="table table-hover table-bordered align-middle text-center">
+          <thead class="table-dark sticky-top">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Username</th>
+              <th scope="col">Full Name</th>
+              <th scope="col">Role</th>
+              <th scope="col" style="width: 120px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users | searchFilter:searchText:['Username','FullName','Role']">
+              <td>{{ u.Id }}</td>
+              <td>{{ u.Username }}</td>
+              <td>{{ u.FullName }}</td>
+              <td><span class="badge bg-info">{{ u.Role }}</span></td>
+              <td>
+                <button class="btn btn-warning btn-sm me-1" (click)="editUser(u)">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" (click)="deleteUser(u.Id)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="(users | searchFilter:searchText:['Username','FullName','Role']).length === 0">
+              <td colspan="5" class="text-center text-muted py-3">
+                <i class="bi bi-info-circle me-2"></i>No users found
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

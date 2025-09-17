@@ -1,4 +1,6 @@
 <div class="container mt-5">
+
+  <!-- Header -->
   <h4 class="mb-4 text-center text-primary fw-bold">🧾 Cashier - Pending Orders</h4>
 
   <!-- No Orders Message -->
@@ -8,13 +10,15 @@
 
   <!-- Orders List -->
   <ng-container *ngIf="orders.length > 0">
-    <div *ngFor="let o of orders" class="card mb-4 shadow rounded-4 border-0 hover-scale">
+    <div *ngFor="let o of orders" class="card mb-4 shadow-lg rounded-4 border-0 order-card hover-scale">
       
       <!-- Header -->
       <div class="card-header d-flex justify-content-between flex-wrap align-items-center bg-light rounded-top p-3">
         <div>
           <span class="fw-bold">🧾 Order #{{ o.Id }}</span>
           <span class="badge bg-info text-dark ms-2">Table {{ o.TableId }}</span>
+          <span *ngIf="o.Status === 'Paid'" class="badge bg-success ms-2">Paid</span>
+          <span *ngIf="o.Status === 'Pending'" class="badge bg-warning text-dark ms-2">Pending</span>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
           <button class="btn btn-sm btn-outline-success" (click)="openPaymentModal(o)">✅ Paid</button>
@@ -34,7 +38,7 @@
       <!-- Body -->
       <div class="card-body p-3">
         <div class="table-responsive">
-          <table class="table table-bordered table-sm align-middle text-center mb-0">
+          <table class="table table-bordered table-sm align-middle text-center mb-0 order-table">
             <thead class="table-light">
               <tr>
                 <th class="text-start">Item</th>
@@ -76,8 +80,6 @@
   </ng-container>
 </div>
 
-
-
 <!-- Discount Modals -->
 <div *ngFor="let o of orders" class="modal fade" [id]="'discountModal' + o.Id" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -97,7 +99,6 @@
     </div>
   </div>
 </div>
-
 
 <!-- Share Bill Modal -->
 <div class="modal fade" id="shareBillModal" tabindex="-1">
@@ -133,8 +134,8 @@
       </div>
       <div class="modal-body">
         <div class="d-grid gap-2">
-          <button class="btn btn-outline-primary" (click)="confirmPayment('Online')">💳 Online Payment</button>
-          <button class="btn btn-outline-success" (click)="confirmPayment('Cash')">💵 Cash Payment</button>
+          <button class="btn btn-outline-primary hover-scale" (click)="confirmPayment('Online')">💳 Online Payment</button>
+          <button class="btn btn-outline-success hover-scale" (click)="confirmPayment('Cash')">💵 Cash Payment</button>
         </div>
       </div>
     </div>

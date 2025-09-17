@@ -22,7 +22,9 @@ export class WaiterComponent implements OnInit {
   selectedTable: any = null;
   activeCategoryId: number | null = null;
   orderItems: any[] = [];
-orderMap: { [tableId: number]: any[] } = {};
+
+  // Maps tableId -> unsaved order items
+  orderMap: { [tableId: number]: any[] } = {};
 
   constructor(
     private api: ApiService,
@@ -32,120 +34,124 @@ orderMap: { [tableId: number]: any[] } = {};
   ) {}
 
   ngOnInit(): void {
+    // Load unsaved waiter orders from localStorage first
+    this.loadOrderMapFromLocal();
+
     this.loadTables();
     this.loadCategories();
     this.loadMenu();
 
-    // Subscribe to order map updates (persistent across screens)
+    // Subscribe to orderMap changes
     this.orderService.getOrderMap$().subscribe(orderMap => {
-      this.orderMap = orderMap;
+      this.orderMap = { ...orderMap, ...this.orderMap }; // merge with localStorage
       if (this.selectedTable) {
-        this.orderItems = orderMap[this.selectedTable.Id] || [];
+        this.orderItems = this.orderMap[this.selectedTable.Id] || [];
       }
     });
 
-    // Listen for socket updates (cashier paid)
+    // Listen for cashier updates
     this.socket.onEvent('orderUpdated').subscribe((updatedOrder: any) => {
-      this.loadTables();
-
       const tableId = updatedOrder.TableId;
 
+      // Paid → clear unsaved items & mark Free
       if (updatedOrder.Status === 'Paid') {
-        // Clear cached order
-        this.orderService.clearTable(tableId);
+        this.orderMap[tableId] = [];
+        this.saveOrderMapToLocal();
 
-        // If currently selected table is this one, clear items
+        // Clear current selection if matches
         if (this.selectedTable?.Id === tableId) {
           this.orderItems = [];
           this.selectedTable = null;
         }
 
-        // Mark table as Free
+        // Update table list
         this.tables = this.tables.map(t =>
-          t.Id === tableId ? { ...t, Status: 'Free' } : t
+          t.Id === tableId ? { ...t, LastOrder: updatedOrder } : t
+        );
+      } else {
+        // Update table LastOrder for pending status
+        this.tables = this.tables.map(t =>
+          t.Id === tableId ? { ...t, LastOrder: updatedOrder } : t
         );
       }
-
-      
     });
-
-   
   }
 
-  /** Load all tables */
+  /** Save unsaved orders to localStorage */
+  saveOrderMapToLocal() {
+    localStorage.setItem('orderMap', JSON.stringify(this.orderMap));
+  }
+
+  /** Load unsaved orders from localStorage */
+  loadOrderMapFromLocal() {
+    const map = localStorage.getItem('orderMap');
+    if (map) this.orderMap = JSON.parse(map);
+  }
+
+  /** Load all tables from API */
   loadTables() {
-    this.api.getTables().subscribe((res:any) => 
-      this.tables = res
-    );
+    this.api.getTables().subscribe((res: any) => {
+      this.tables = res || [];
+    });
   }
 
-getTableStatus(table: any): string {
-  const items = this.orderMap?.[table.Id] || [];
+  /** Get table status based on unsaved & backend orders */
+  getTableStatus(table: any): string {
+    const unsavedItems = this.orderMap?.[table.Id] || [];
+    if (unsavedItems.length > 0) return 'occupied';
 
-  if (items.length === 0) return 'Free'; // No items → Free
+    const lastOrder = table.LastOrder;
+    if (lastOrder?.Status?.toLowerCase() === 'pending') return 'pending';
+    if (lastOrder?.Status?.toLowerCase() === 'paid') return 'Free';
 
-  const hasPending = items.some(item => item.Status?.toLowerCase() === 'pending');
-  const allPaid = items.length > 0 && items.every(item => item.Status?.toLowerCase() === 'paid');
+    return 'Free';
+  }
 
-  if (hasPending) return 'pending';
-  if (allPaid) return 'Free'; // All paid → Free
-
-  return 'occupied'; // Items exist, not paid → Occupied
-}
-
-
-
-/** Load categories and set default active category */
-loadCategories() {
-  this.api.getCategories().subscribe({
-    next: (res) => {
-      this.categories = res || [];
-
-      // ✅ Select the first category by default
-      if (this.categories.length > 0) {
-        // Option 1: Default to first category
-        this.activeCategoryId = this.categories[0].Id;
-
-        // Option 2: Default to 'Starter' category if it exists
-        const starter = this.categories.find(c => c.Name.toLowerCase() === 'Tandoori Starter');
-        if (starter) this.activeCategoryId = starter.Id;
+  /** Load categories and set active */
+  loadCategories() {
+    this.api.getCategories().subscribe({
+      next: res => {
+        this.categories = res || [];
+        if (this.categories.length > 0) {
+          this.activeCategoryId = this.categories[0].Id;
+          const starter = this.categories.find(c => c.Name.toLowerCase() === 'tandoori starter');
+          if (starter) this.activeCategoryId = starter.Id;
+        }
+      },
+      error: err => {
+        console.error('Failed to load categories:', err);
+        this.categories = [];
+        this.activeCategoryId = null;
       }
-    },
-    error: (err) => {
-      console.error('Failed to load categories:', err);
-      this.categories = [];
-      this.activeCategoryId = null;
-    }
-  });
-}
+    });
+  }
 
   /** Load full menu */
   loadMenu() {
-    this.api.getMenu().subscribe(res => this.menu = res);
+    this.api.getMenu().subscribe(res => this.menu = res || []);
   }
 
   /** Select table */
   selectTable(t: any) {
     this.selectedTable = t;
 
-    // Mark table Occupied if Free
-    if (t.Status === 'Free') t.Status = 'Occupied';
-
-    // Load cached order
-    this.orderItems = this.orderService.getOrderByTableId(t.Id);
+    // Load unsaved orders for this table
+    this.orderItems = this.orderMap[t.Id] || [];
 
     if (!this.orderItems.length) {
-      // Fetch from backend if nothing cached
+      // Fetch backend order if nothing cached
       this.orderService.getOrderByTable(t.Id).subscribe({
         next: order => {
           this.orderItems = order?.Items.map(i => ({ ...i, qty: i.qty || 1 })) || [];
-          this.orderService.setOrderForTable(t.Id, this.orderItems);
+          this.orderMap[t.Id] = this.orderItems;
+          this.saveOrderMapToLocal();
 
-          if (this.orderItems.length) t.Status = 'Occupied';
+          if (this.orderItems.length) t.Status = 'occupied';
         },
         error: () => {
           this.orderItems = [];
-          this.orderService.setOrderForTable(t.Id, []);
+          this.orderMap[t.Id] = [];
+          this.saveOrderMapToLocal();
         }
       });
     }
@@ -164,31 +170,28 @@ loadCategories() {
     if (existing) existing.qty++;
     else this.orderItems.push({ ...item, qty: 1 });
 
-    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
-
-    // Mark table Occupied if Free
-    this.tables = this.tables.map(t =>
-      t.Id === this.selectedTable.Id && t.Status === 'Free'
-        ? { ...t, Status: 'Occupied' }
-        : t
-    );
+    this.orderMap[this.selectedTable.Id] = this.orderItems;
+    this.saveOrderMapToLocal();
   }
 
   increaseQty(i: any) {
     i.qty++;
-    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+    this.orderMap[this.selectedTable.Id] = this.orderItems;
+    this.saveOrderMapToLocal();
   }
 
   decreaseQty(i: any) {
     if (i.qty > 1) i.qty--;
     else this.removeItem(i);
 
-    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+    this.orderMap[this.selectedTable.Id] = this.orderItems;
+    this.saveOrderMapToLocal();
   }
 
   removeItem(it: any) {
     this.orderItems = this.orderItems.filter(x => x.Id !== it.Id);
-    this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
+    this.orderMap[this.selectedTable.Id] = this.orderItems;
+    this.saveOrderMapToLocal();
   }
 
   /** Calculate total */
@@ -218,10 +221,12 @@ loadCategories() {
       next: () => {
         alert('Order submitted');
 
-        // Mark table as pending
-        this.tables = this.tables.map(t =>
-          t.Id === this.selectedTable.Id ? { ...t, Status: 'pending' } : t
-        );
+        // Clear unsaved items
+        this.orderMap[this.selectedTable.Id] = [];
+        this.saveOrderMapToLocal();
+
+        // Update table LastOrder as pending
+        this.selectedTable.LastOrder = { Status: 'pending' };
 
         this.orderItems = [];
         this.selectedTable = null;

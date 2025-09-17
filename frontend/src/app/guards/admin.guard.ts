@@ -5,9 +5,11 @@ import { AuthService } from '../services/auth.service';
 @Injectable({ providedIn: 'root' })
 export class AdminGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
+
   canActivate(): boolean {
-    if (this.auth.getToken() && this.auth.getUserRole() === 'Admin') return true;
-    this.router.navigate(['/login']);
+    const role = this.auth.getUserRole();
+    if (role === 'Admin') return true;
+    this.router.navigate(['/login']); // or redirect to waiter/cashier
     return false;
   }
 }

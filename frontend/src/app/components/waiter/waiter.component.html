@@ -3,7 +3,7 @@
   <!-- 🪑 Table Grid -->
   <div class="row g-3 mb-4 justify-content-start">
     <div class="col-6 col-sm-4 col-md-3 col-lg-auto" *ngFor="let table of tables">
-      <div class="card text-center shadow-sm rounded-3 p-3 position-relative cursor-pointer hover-scale"
+      <div class="card text-center shadow-sm rounded-4 p-3 position-relative cursor-pointer table-card"
            [ngClass]="{
              'bg-success text-white': getTableStatus(table) === 'Paid' || getTableStatus(table) === 'Free',
              'bg-danger text-white': getTableStatus(table) === 'occupied',
@@ -33,7 +33,7 @@
 
       <!-- Selected Table Info -->
       <div *ngIf="selectedTable" class="mb-3">
-        <div class="alert alert-info rounded-pill text-center fw-bold small sticky-top" style="top: 0; z-index: 10;">
+        <div class="alert alert-info rounded-pill text-center fw-bold small sticky-top d-flex justify-content-between align-items-center" style="top: 0; z-index: 10;">
           🍽 Selected Table: <span class="text-primary">{{ selectedTable.TableNumber }}</span>
           <span class="badge bg-secondary ms-2">{{ getTableStatus(selectedTable) }}</span>
         </div>
@@ -41,7 +41,7 @@
         <!-- Category Pills -->
         <div class="d-flex flex-wrap gap-2 overflow-auto mb-3">
           <button *ngFor="let c of categories"
-                  class="btn btn-sm flex-fill flex-sm-auto"
+                  class="btn btn-sm flex-fill flex-sm-auto category-btn"
                   [class.btn-primary]="c.Id === activeCategoryId"
                   [class.btn-outline-primary]="c.Id !== activeCategoryId"
                   (click)="activeCategoryId = c.Id">
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Menu Search -->
-        <div class="mb-3">
+        <div class="mb-3 d-flex justify-content-center">
           <input type="text" class="form-control form-control-sm w-100 w-sm-75 mx-auto"
                  placeholder="🔍 Search menu..." [(ngModel)]="searchText">
         </div>
@@ -58,7 +58,7 @@
         <!-- 🍔 Menu Items Grid -->
         <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
           <div class="col" *ngFor="let item of getFilteredMenu() | searchFilter:searchText:['Name','Price']">
-            <div class="card shadow-sm rounded h-100 text-center p-2 cursor-pointer hover-scale"
+            <div class="card shadow-sm rounded-4 h-100 text-center p-2 menu-card"
                  (click)="addToOrder(item)">
               <div class="card-body p-2 d-flex flex-column justify-content-between">
                 <h6 class="fw-bold mb-2 small" style="word-break: break-word;">
@@ -76,8 +76,8 @@
 
     <!-- 🧾 Right Side: Order Panel -->
     <div class="col-lg-4 mb-4" *ngIf="selectedTable && orderItems.length > 0">
-      <div class="card shadow-lg rounded-3 sticky-top" style="top: 20px;">
-        
+      <div class="card shadow-lg rounded-4 sticky-top order-panel" style="top: 20px;">
+
         <!-- Header -->
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
           <span>🧾 Current Order ({{ orderItems.length }} items)</span>
@@ -86,8 +86,8 @@
 
         <!-- Body -->
         <div class="card-body p-2" style="max-height: 60vh; overflow-y:auto;">
-          <div *ngFor="let item of orderItems" class="d-flex flex-wrap align-items-center justify-content-between mb-2 p-2 border rounded">
-            <div class="fw-bold me-2" style="flex: 1 1 100%; word-break: break-word;">
+          <div *ngFor="let item of orderItems" class="d-flex flex-wrap align-items-center justify-content-between mb-2 p-2 border rounded order-item">
+            <div class="fw-bold me-2 flex-grow-1" style="word-break: break-word;">
               {{ item.Name }}
             </div>
             <div class="d-flex align-items-center gap-1 me-2 mt-1 mt-md-0">
@@ -105,15 +105,15 @@
         </div>
 
         <!-- Footer -->
-        <div class="card-footer bg-light text-end">
-          <h6 class="fw-bold text-success mb-2">
+        <div class="card-footer bg-light text-end d-flex flex-column gap-2">
+          <h6 class="fw-bold text-success mb-2 text-end">
             Total: ₹{{ getOrderTotal() }}
           </h6>
           <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-warning btn-sm flex-fill py-1" (click)="printForKitchen()">
+            <button class="btn btn-warning btn-sm flex-fill py-2 hover-scale" (click)="printForKitchen()">
               🍳 Kitchen Print
             </button>
-            <button class="btn btn-primary btn-sm flex-fill py-1" (click)="submitOrder()">
+            <button class="btn btn-primary btn-sm flex-fill py-2 hover-scale" (click)="submitOrder()">
               ✅ Submit Order
             </button>
           </div>

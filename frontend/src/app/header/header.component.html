@@ -2,8 +2,8 @@
   <div class="container-fluid">
     <!-- Logo + Brand -->
     <a class="navbar-brand d-flex align-items-center" href="#">
-      <img src="assets/ss_logo.png" alt="Logo" class="me-2" style="height: 40px;">
-      <span class="fw-bold fs-5"></span>
+      <!-- <img src="assets/ss_logo.png" alt="Logo" class="me-2" style="height: 40px;"> -->
+      <span class="fw-bold fs-5">POS</span>
     </a>
 
     <!-- Mobile toggle -->
@@ -14,22 +14,32 @@
     <!-- Navbar Links -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
+       <li class="nav-item" *ngFor="let item of visibleMenuItems">
+  <a class="nav-link" [routerLink]="item.link" routerLinkActive="active">
+    <i class="bi" [ngClass]="item.icon"></i> {{ item.label }}
+  </a>
+</li>
+
+
+        </ul>
+
+      <!-- <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
             <i class="bi bi-people"></i> Users
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/categories" routerLinkActive="active">
             <i class="bi bi-grid"></i> Categories
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/menu" routerLinkActive="active">
             <i class="bi bi-card-list"></i> Menu
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/tables" routerLinkActive="active">
             <i class="bi bi-table"></i> Tables
           </a>
@@ -39,26 +49,26 @@
             <i class="bi bi-person-badge"></i> Waiter
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Cashier'">
           <a class="nav-link" routerLink="/cashier" routerLinkActive="active">
             <i class="bi bi-cash"></i> Cashier
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/order-history" routerLinkActive="active">
             <i class="bi bi-file-earmark-text"></i> Reports
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" *ngIf="loggedInUserRole == 'Admin'">
           <a class="nav-link" routerLink="/payment-history" routerLinkActive="active">
             <i class="bi bi-cash-stack"></i> Payments Reports
           </a>
         </li>
-      </ul>
+      </ul> -->
 
       <!-- Right Side -->
       <div class="d-flex align-items-center gap-3">
-        <span class="text-white small">👤 {{this.loggedInUsername}}</span>
+        <span class="text-white small">👤 {{ loggedInUsername || 'Guest' }}</span>
         <button class="btn btn-outline-light btn-sm px-3" (click)="logout()">
           <i class="bi bi-box-arrow-right"></i> Logout
         </button>

@@ -1,16 +1,63 @@
-/* Hover effect for menu items */
-.hover-scale {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Table cards hover */
+.table-card {
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.hover-scale:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+.table-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-/* Small card style for tables */
-.card.cursor-pointer {
-  transition: transform 0.2s ease;
+/* Category buttons */
+.category-btn {
+  transition: all 0.2s;
 }
-.card.cursor-pointer:hover {
+.category-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Menu cards hover */
+.menu-card {
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.menu-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Order panel sticky and card style */
+.order-panel {
+  transition: all 0.2s;
+}
+
+/* Current order items */
+.order-item {
+  transition: all 0.2s;
+}
+.order-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Flex adjustments for order items */
+.order-item > div:first-child {
+  flex: 1 1 40%;
+  min-width: 100px;
+}
+.order-item > div:nth-child(2) {
+  flex: 0 0 auto;
+}
+.order-item > div:nth-child(3) {
+  flex: 0 0 70px;
+  text-align: end;
+}
+.order-item > div:last-child {
+  flex: 0 0 auto;
+}
+
+/* Buttons hover effect */
+.hover-scale {
+  transition: transform 0.2s;
+}
+.hover-scale:hover {
   transform: scale(1.05);
 }
