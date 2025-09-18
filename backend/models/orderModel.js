@@ -6,7 +6,7 @@ async function create(orderData) {
     const result = await pool.request()
         .input('TableId', orderData.TableId)
         .input('WaiterId', orderData.WaiterId)
-        .input('Items', JSON.stringify(orderData.Items)) // store as JSON
+        .input('Items', JSON.stringify(orderData.Items))
         .input('Total', orderData.Total)
         .input('Status', orderData.Status || 'pending')
         .query(`
@@ -16,6 +16,8 @@ async function create(orderData) {
         `);
     return result.recordset[0];
 }
+
+
 
 // Get all pending orders
 async function getPending() {
@@ -37,30 +39,64 @@ async function getById(id) {
 // Get All Orders
 async function fetchAllOrders() {
   const pool = await getPool();
-  const result = await pool.request().query('SELECT * FROM Orders ORDER BY Status ASC, UpdatedAt DESC');
-  return result.recordset; // ✅ returns array of all orders
+  const result = await pool.request().query(`
+    SELECT * FROM Orders ORDER BY Status ASC, UpdatedAt DESC
+  `);
+
+  // ✅ Parse Items for each order
+  return result.recordset.map(order => ({
+    ...order,
+    Items: order.Items ? JSON.parse(order.Items) : []
+  }));
 }
 
+
 // Full update (if needed, e.g., for editing items or total)
+// async function update(id, data) {
+//     const pool = await getPool();
+//     const result = await pool.request()
+//         .input('Id', id)
+//         .input('Items', JSON.stringify(data.Items || []))
+//         .input('Total', data.Total ?? 0)
+//         .input('DiscountPercent', data.DiscountPercent ?? 0)
+//         .input('DiscountAmount', data.DiscountAmount ?? 0)
+//         .input('Status', data.Status ?? 'pending')
+//         .query(`
+//             UPDATE Orders 
+//             SET Items=@Items, Total=@Total, 
+//                 DiscountPercent=@DiscountPercent, 
+//                 DiscountAmount=@DiscountAmount, 
+//                 Status=@Status, UpdatedAt=GETDATE()
+//             OUTPUT INSERTED.*
+//             WHERE Id=@Id
+//         `);
+//     return result.recordset[0];
+// }
+
 async function update(id, data) {
-    const pool = await getPool();
-    const result = await pool.request()
-        .input('Id', id)
-        .input('Items', JSON.stringify(data.Items || []))
-        .input('Total', data.Total ?? 0)
-        .input('DiscountPercent', data.DiscountPercent ?? 0)
-        .input('DiscountAmount', data.DiscountAmount ?? 0)
-        .input('Status', data.Status ?? 'pending')
-        .query(`
-            UPDATE Orders 
-            SET Items=@Items, Total=@Total, 
-                DiscountPercent=@DiscountPercent, 
-                DiscountAmount=@DiscountAmount, 
-                Status=@Status, UpdatedAt=GETDATE()
-            OUTPUT INSERTED.*
-            WHERE Id=@Id
-        `);
-    return result.recordset[0];
+  const pool = await getPool();
+  const result = await pool.request()
+    .input('Id', id)
+    .input('Items', JSON.stringify(data.Items || []))
+    .input('Total', data.Total ?? 0)
+    .input('DiscountPercent', data.DiscountPercent ?? 0)
+    .input('DiscountAmount', data.DiscountAmount ?? 0)
+    .input('Status', data.Status ?? 'pending')
+    .query(`
+      UPDATE Orders 
+      SET Items=@Items, Total=@Total, 
+          DiscountPercent=@DiscountPercent, 
+          DiscountAmount=@DiscountAmount, 
+          Status=@Status, UpdatedAt=GETDATE()
+      OUTPUT INSERTED.*
+      WHERE Id=@Id
+    `);
+
+  const updated = result.recordset[0];
+
+  // ✅ Parse Items before returning to frontend
+  updated.Items = typeof updated.Items === 'string' ? JSON.parse(updated.Items) : updated.Items;
+  return updated;
 }
 
 // Update only status (mark paid or cancel)

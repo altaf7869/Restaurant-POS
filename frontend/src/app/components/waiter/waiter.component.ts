@@ -5,6 +5,7 @@ import { OrderService } from '../../services/order.service';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
 import { SearchFilterPipe } from '../../pipes/search-filter.pipe';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-waiter',
@@ -30,7 +31,8 @@ export class WaiterComponent implements OnInit {
     private api: ApiService,
     private orderService: OrderService,
     private socket: SocketService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private toast: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -198,6 +200,30 @@ export class WaiterComponent implements OnInit {
   getOrderTotal() {
     return this.orderItems.reduce((sum, i) => sum + i.Price * i.qty, 0);
   }
+
+  clearOrder() {
+  if (!this.selectedTable) { 
+    this.toast.info('Select table first'); 
+    return; 
+  }
+  const tableId = this.selectedTable.Id;
+
+  if (!this.orderItems.length) { 
+    this.toast.info('No items to clear'); 
+    return; 
+  }
+
+  if (!confirm('Clear this order?')) return;
+
+  this.orderItems = [];
+  delete this.orderMap[tableId];
+  this.saveOrderMapToLocal();
+
+  // ✅ Remove lastOrder from localStorage
+
+  this.selectedTable = null;
+}
+
 
   /** Submit order */
   submitOrder() {

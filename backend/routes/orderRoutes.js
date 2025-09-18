@@ -12,7 +12,7 @@ const {
   markPaid,
   kitchenPrint,
   shareOrder,
-  getOrderByTable
+  getOrderByTable,
 } = require('../controllers/orderController');
 
 // Protected routes (require auth)

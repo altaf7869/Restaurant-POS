@@ -2,7 +2,7 @@ const { getPool, sql } = require('../config/db');
 
 async function getAllCategories() {
   const pool = await getPool();
-  const result = await pool.request().query('SELECT * FROM Categories ORDER BY Name');
+  const result = await pool.request().query('SELECT * FROM Categories ORDER BY Name desc');
   return result.recordset;
 }
 

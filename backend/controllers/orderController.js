@@ -14,9 +14,14 @@ async function createOrder(req, res) {
     const orderData = req.body;
     if (!orderData) return res.status(400).json({ message: 'Order data required' });
 
-    const newOrder = await orderModel.create(orderData);
+    let newOrder = await orderModel.create(orderData);
 
-    // Emit socket event
+    // Parse Items from JSON string to array
+    if (newOrder?.Items) {
+      try { newOrder.Items = JSON.parse(newOrder.Items); }
+      catch { newOrder.Items = []; }
+    }
+
     req.app.get('io').emit('orderCreated', newOrder);
     res.json(newOrder);
   } catch (err) {
@@ -24,6 +29,7 @@ async function createOrder(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
+
 
 /**
  * Get all pending orders
@@ -191,8 +197,6 @@ async function getOrderByTable(req, res) {
   }
 }
 
-
-
 /**
  * Share order via WhatsApp Cloud API
  */
@@ -281,5 +285,5 @@ module.exports = {
   markPaid,
   kitchenPrint,  // added
   shareOrder,
-  getOrderByTable
+  getOrderByTable,
 };

@@ -35,16 +35,30 @@ export class CashierComponent implements OnInit {
       else this.orders.unshift(order);
     });
 
+// this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
+//   const order = this.prepareOrder(updated);
+//   const idx = this.orders.findIndex(o => o.Id === order.Id);
+//   if (idx > -1) this.orders[idx] = order;
+//   else this.orders.unshift(order);
+// });
+
+
     this.socket.onEvent('orderDeleted').subscribe((payload: any) => {
       this.orders = this.orders.filter(o => o.Id !== payload.id);
     });
   }
 
-  loadOrders() {
-    this.orderService.getPendingOrders().subscribe(res => {
+loadOrders() {
+  this.orderService.getPendingOrders().subscribe({
+    next: (res) => {
       this.orders = res.map(o => this.prepareOrder(o));
-    });
-  }
+    },
+    error: (err) => {
+      console.error('Failed to load orders:', err);
+      this.orders = [];
+    }
+  });
+}
 
   prepareOrder(order: any) {
     order.Items = this.parseItems(order.Items);
@@ -170,7 +184,13 @@ confirmPayment(method: 'Online' | 'Cash') {
 
   cancelOrder(order: any) {
     if (!confirm('Cancel order?')) return;
-    this.orderService.deleteOrder(order.Id).subscribe(() => this.loadOrders());
+    this.orderService.deleteOrder(order.Id).subscribe(() =>{
+    this.loadOrders()
+      this.orderService.clearTable(order.TableId);
+      this.orderService.clearAll()
+    }
+      
+  );
   }
 
   viewOrder(order: any) {

@@ -49,7 +49,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let it of o.Items">
-                <td class="text-start">{{ it.Name }}</td>
+                <td class="text-start">{{ it.Name }} -  {{it.qty}} x {{it.Price}}</td>
                 <td>{{ it.qty }}</td>
                 <td>{{ it.Price | currency:'INR' }}</td>
                 <td>{{ (it.Price * it.qty) | currency:'INR' }}</td>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, map } from 'rxjs';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
@@ -56,6 +56,12 @@ export class OrderService {
   getPendingOrders(): Observable<Order[]> {
     return this.http.get<Order[]>(`${this.base}/pending`, this.getHeaders());
   }
+
+  getPendingOrderByTable(tableId: number): Observable<Order | null> {
+  return this.getPendingOrders().pipe(
+    map(orders => orders.find(o => o.TableId === tableId) || null)
+  );
+}
 
   getOrder(id: number): Observable<Order> {
     return this.http.get<Order>(`${this.base}/${id}`, this.getHeaders());
