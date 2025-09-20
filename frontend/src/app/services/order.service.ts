@@ -4,7 +4,7 @@ import { Observable, BehaviorSubject, map } from 'rxjs';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 
-/** ✅ Define interfaces for strong typing */
+/** ------------------ TYPES ------------------ */
 export interface OrderItem {
   menuItemId: number;
   Name: string;
@@ -15,28 +15,27 @@ export interface OrderItem {
 export interface Order {
   Id: number;
   TableId: number;
-  Items: any[];
+  Items: OrderItem[];
   Status: string;
-  Total?: number;          // <-- add this
+  Total?: number;
   GST?: number;
   DiscountPercent?: number;
   DiscountAmount?: number;
   GrandTotal?: number;
 }
 
-
-/** ✅ Service for handling orders and table cache */
+/** ------------------ SERVICE ------------------ */
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly base = `${environment.apiUrl}/orders`;
 
-  /** Global cache of orders per table */
+  /** Reactive table order cache */
   private orderMap: { [tableId: number]: OrderItem[] } = {};
   private orderMapSubject = new BehaviorSubject<{ [tableId: number]: OrderItem[] }>({});
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
-  /** ✅ Centralized headers */
+  /** Centralized headers */
   private getHeaders() {
     const token = this.auth.getToken();
     return {
@@ -57,31 +56,29 @@ export class OrderService {
     return this.http.get<Order[]>(`${this.base}/pending`, this.getHeaders());
   }
 
+  /** Get pending order for specific table */
   getPendingOrderByTable(tableId: number): Observable<Order | null> {
-  return this.getPendingOrders().pipe(
-    map(orders => orders.find(o => o.TableId === tableId) || null)
-  );
-}
+    return this.getPendingOrders().pipe(
+      map(orders => orders.find(o => o.TableId === tableId) || null)
+    );
+  }
 
   getOrder(id: number): Observable<Order> {
     return this.http.get<Order>(`${this.base}/${id}`, this.getHeaders());
   }
 
-  getAllOrderHistory(): Observable<Order> {
-    return this.http.get<Order>(`${this.base}/all/history`, this.getHeaders());
+  getAllOrderHistory(): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.base}/all/history`, this.getHeaders());
   }
 
   updateOrder(id: number, payload: Partial<Order>): Observable<Order> {
     return this.http.put<Order>(`${this.base}/${id}`, payload, this.getHeaders());
   }
 
-  // markPaid(id: number): Observable<any> {
-  //   return this.http.put(`${this.base}/${id}/mark-paid`, {}, this.getHeaders());
-  // }
-markPaid(id: number, paymentData: { amount: number; method: string; collectedBy: any }) {
-  return this.http.put<any>(`${this.base}/${id}/mark-paid`, paymentData, this.getHeaders());
-}
-
+  /** Mark order as paid with optional payment data */
+  markPaid(id: number, paymentData: { amount: number; method: string; collectedBy: any }): Observable<Order> {
+    return this.http.put<Order>(`${this.base}/${id}/mark-paid`, paymentData, this.getHeaders());
+  }
 
   deleteOrder(id: number): Observable<any> {
     return this.http.delete(`${this.base}/${id}`, this.getHeaders());
@@ -93,10 +90,6 @@ markPaid(id: number, paymentData: { amount: number; method: string; collectedBy:
       {},
       { ...this.getHeaders(), responseType: 'text' as const }
     );
-  }
-
-  getOrderByTable(tableId: number): Observable<Order | null> {
-    return this.http.get<Order | null>(`${this.base}/table/${tableId}`, this.getHeaders());
   }
 
   getOrderPdf(id: number): Observable<Blob> {
@@ -118,33 +111,39 @@ markPaid(id: number, paymentData: { amount: number; method: string; collectedBy:
     return this.http.post(`${this.base}/${orderId}/share`, payload, this.getHeaders());
   }
 
+  // Add this method to OrderService
+getOrderByTable(tableId: number) {
+  return this.http.get<Order | null>(`${this.base}/table/${tableId}`, this.getHeaders());
+}
+
+
   /** ------------------ TABLE ORDER CACHE ------------------ */
 
-  /** Get current order map as observable (reactive) */
+  /** Observable for reactive updates */
   getOrderMap$(): Observable<{ [tableId: number]: OrderItem[] }> {
     return this.orderMapSubject.asObservable();
   }
 
-  /** Get current items for a specific table */
+  /** Get current items for a table */
   getOrderByTableId(tableId: number): OrderItem[] {
     return this.orderMap[tableId] || [];
   }
 
-  /** Set items for a specific table and emit changes */
+  /** Set items for a table and emit changes */
   setOrderForTable(tableId: number, items: OrderItem[]) {
     this.orderMap[tableId] = items;
-    this.orderMapSubject.next(this.orderMap);
+    this.orderMapSubject.next({ ...this.orderMap });
   }
 
-  /** Clear a specific table */
+  /** Clear items for a specific table */
   clearTable(tableId: number) {
     delete this.orderMap[tableId];
-    this.orderMapSubject.next(this.orderMap);
+    this.orderMapSubject.next({ ...this.orderMap });
   }
 
-  /** Clear all table orders */
+  /** Clear all tables */
   clearAll() {
     this.orderMap = {};
-    this.orderMapSubject.next(this.orderMap);
+    this.orderMapSubject.next({ ...this.orderMap });
   }
 }
