@@ -107,37 +107,39 @@ export class WaiterComponent implements OnInit {
   }
 
   /** ------------------ Table Selection ------------------ */
- selectTable(t: any) {
+selectTable(t: any) {
   this.selectedTable = t;
 
-  // 1️⃣ Check local draft first
+  // 1️⃣ Always check local draft first
   const localDraft = this.orderService.getOrderByTableId(t.Id);
-  if (localDraft?.length) {
-    this.orderItems = localDraft;
-    return;
-  }
 
-  // 2️⃣ If no draft, fetch backend order
- this.orderService.getOrderByTable(t.Id).subscribe({
-  next: order => {
-    // Keep server order as source of truth if it exists
-    if (order?.Id) {
-      this.selectedTable.LastOrder = order; // Id, Status, Items, etc.
+  // 2️⃣ Fetch latest order from backend
+  this.orderService.getOrderByTable(t.Id).subscribe({
+    next: order => {
+      if (order?.Id) {
+        // ✅ Only replace LastOrder if it's new or updated
+        if (!this.selectedTable.LastOrder || order.Id > (this.selectedTable.LastOrder?.Id || 0)) {
+          this.selectedTable.LastOrder = order; // Store full order info
+        }
+      }
+
+      const backendItems = order?.Items?.map(i => ({ ...i, qty: i.qty || 1 })) || [];
+      if (localDraft?.length) {
+        // ✅ Prefer local draft if exists (unsaved changes)
+        this.orderItems = localDraft;
+      } else {
+        this.orderItems = backendItems;
+      }
+
+      // ✅ Sync orderItems into local storage so next navigation reloads same data
+      this.orderService.setOrderForTable(t.Id, this.orderItems);
+    },
+    error: () => {
+      // In case backend fails, still try to load draft
+      this.orderItems = localDraft || [];
     }
-    const backendItems = order?.Items?.map(i => ({ ...i, qty: i.qty || 1 })) || [];
-    const draftItems = this.orderService.getOrderByTableId(t.Id) || [];
-    this.orderItems = backendItems.length ? backendItems : draftItems;
-    this.orderService.setOrderForTable(t.Id, this.orderItems);
-  },
-  error: () => {
-    const draftItems = this.orderService.getOrderByTableId(t.Id) || [];
-    this.orderItems = draftItems;
-  }
-});
-
+  });
 }
-
-
 
   /** ------------------ Order Operations ------------------ */
 private syncOrder(status: 'draft' | 'pending') {
@@ -188,27 +190,41 @@ removeItem(i: OrderItem) { this.orderItems = this.orderItems.filter(x => x.menuI
 private updateOrder() {
   if (!this.selectedTable) return;
 
-  // Save draft locally
   this.orderService.setOrderForTable(this.selectedTable.Id, this.orderItems);
 
   const wasSubmitted = this.selectedTable?.LastOrder?.Status?.toLowerCase() === 'pending';
   const status: 'draft' | 'pending' = wasSubmitted ? 'pending' : 'draft';
 
-  // Always keep server Id for submitted orders
-  const orderId = wasSubmitted ? this.selectedTable?.LastOrder?.Id : null;
-
   const payload = {
-    Id: orderId, // must be present for submitted/pending
+    Id: wasSubmitted ? this.selectedTable?.LastOrder?.Id : null,
     TableId: this.selectedTable.Id,
-    Items: this.orderItems.map(i => ({ menuItemId: i.menuItemId, Name: i.Name, Price: i.Price, qty: i.qty })),
+    Items: this.orderItems.map(i => ({
+      menuItemId: i.menuItemId,
+      Name: i.Name,
+      Price: i.Price,
+      qty: i.qty
+    })),
     Total: this.getOrderTotal(),
     Status: status,
     UpdatedAt: new Date().toISOString(),
     UpdatedBy: 'waiter'
   };
 
-  this.socket.emitEvent('orderUpdated', payload);
+  if (wasSubmitted) {
+    this.orderService.updateOrder(this.selectedTable.LastOrder.Id, payload).subscribe({
+      next: (updatedFromDb) => {
+        // 🔑 Always refresh LastOrder from backend response
+        this.selectedTable.LastOrder = updatedFromDb;
+        this.socket.emitEvent('orderUpdated', updatedFromDb);
+      },
+      error: (err) => console.error('Failed to update submitted order:', err)
+    });
+  } else {
+    this.socket.emitEvent('orderUpdated', payload);
+  }
 }
+
+
 
   getOrderTotal() {
     return this.orderItems.reduce((sum, i) => sum + i.Price * i.qty, 0);

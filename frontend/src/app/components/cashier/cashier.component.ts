@@ -35,38 +35,15 @@ export class CashierComponent implements OnInit {
     });
 
     // Updates from waiter
- this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
-  const incoming = this.prepareOrder(updated);
-  const keyIdx = incoming.Id
-    ? this.orders.findIndex(o => o.Id === incoming.Id)
-    : this.orders.findIndex(o => !o.Id && o.TableId === incoming.TableId);
-
-  // Prevent stale updates overwriting fresh state
-  const isNewer = (oldDate?: string, newDate?: string) => {
-    if (!oldDate) return true;
-    if (!newDate) return false;
-    return new Date(newDate).getTime() >= new Date(oldDate).getTime();
-  };
-
-  if (keyIdx > -1) {
-    const current = this.orders[keyIdx];
-    if (isNewer(current.UpdatedAt, incoming.UpdatedAt)) {
-      // Replace object and nested arrays to trigger change detection
-      this.orders = [
-        ...this.orders.slice(0, keyIdx),
-        { ...incoming, Items: [...(incoming.Items || [])] },
-        ...this.orders.slice(keyIdx + 1)
-      ];
-      this.cd?.markForCheck?.(); // if OnPush
-    }
+this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
+  const idx = this.orders.findIndex(o => o.Id === updated.Id);
+  if (idx > -1) {
+    this.orders[idx] = { ...updated };
   } else {
-    this.orders = [{ ...incoming, Items: [...(incoming.Items || [])] }, ...this.orders];
-    this.cd?.markForCheck?.();
+    this.orders.unshift(updated);
   }
+  this.cd.detectChanges(); // 🔑 Force UI refresh
 });
-
-
-
 
     // Deleted orders
     this.socket.onEvent('orderDeleted').subscribe((payload: any) => {
