@@ -18,11 +18,11 @@ function generateOrderHtml(order) {
 
       return `
       <tr>
-        <td style="padding:1px; text-align:center;">${i + 1}</td>
-        <td style="padding:1px; text-align:left;">${item.Name || ''}</td>
-        <td style="padding:1px; text-align:center;">${qty}</td>
-        <td style="padding:1px; text-align:right;">${Math.round(price)}</td>
-        <td style="padding:1px; text-align:right;">${Math.round(total)}</td>
+        <td style="padding:2px; text-align:center;">${i + 1}</td>
+        <td style="padding:2px; text-align:left;">${item.Name || ''}</td>
+        <td style="padding:2px; text-align:center;">${qty}</td>
+        <td style="padding:2px; text-align:right;">${Math.round(price)}</td>
+        <td style="padding:2px; text-align:right;">${Math.round(total)}</td>
       </tr>
     `;
     })
@@ -53,18 +53,18 @@ function generateOrderHtml(order) {
     <meta charset="utf-8">
     <title>Order #${order.Id || ''}</title>
     <style>
-      body { font-family: monospace; margin:0; padding:0; font-size:9px; }
-      .container { width: 55mm; margin:0 auto; text-align:center; } /* narrower for 58mm printer */
-      .logo img { max-width:40px; margin:2px auto; display:block; }
-      .restaurant-name { margin:2px 0; font-size:12px; font-weight:bold; text-transform:uppercase; }
-      .address { font-size:8px; line-height:1.2; margin-bottom:2px; }
-      .order-meta { margin:2px 0; font-size:9px; }
-      table { width:100%; border-collapse: collapse; margin-top:2px; }
-      th, td { border-bottom: 1px dashed #aaa; font-size:9px; padding:1px; }
+      body { font-family: monospace; margin:0; padding:0; font-size:10px; }
+      .container { width: 72mm; margin:0 auto; text-align:center; } /* for 80mm printer */
+      .logo img { max-width:55px; margin:4px auto; display:block; }
+      .restaurant-name { margin:2px 0; font-size:13px; font-weight:bold; text-transform:uppercase; }
+      .address { font-size:9px; line-height:1.3; margin-bottom:4px; }
+      .order-meta { margin:3px 0; font-size:10px; }
+      table { width:100%; border-collapse: collapse; margin-top:3px; }
+      th, td { border-bottom: 1px dashed #aaa; font-size:10px; padding:2px; }
       th { font-weight:bold; }
-      tfoot td { font-weight:bold; border-top:1px solid #000; padding-top:2px; }
-      .total-row td { font-size:10px; }
-      .footer { margin-top:2px; font-size:8px; text-align:center; }
+      tfoot td { font-weight:bold; border-top:1px solid #000; padding-top:3px; }
+      .total-row td { font-size:11px; }
+      .footer { margin-top:4px; font-size:9px; text-align:center; }
     </style>
   </head>
   <body>

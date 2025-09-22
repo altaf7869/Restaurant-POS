@@ -60,7 +60,7 @@ async function getById(id) {
 async function fetchAllOrders() {
   const pool = await getPool();
   const result = await pool.request().query(`
-    SELECT * FROM Orders ORDER BY Status ASC, UpdatedAt DESC
+    SELECT * FROM Orders ORDER BY UpdatedAt DESC
   `);
 
   return result.recordset.map(order => ({

@@ -107,7 +107,7 @@ applyFilter() {
   }
 
 goToPage(page: any) {
-  if (typeof page !== 'number') return; // ✅ ignore clicks on "..."
+  if (typeof page !== 'number') return; 
   if (page < 1 || page > this.totalPages) return;
   this.currentPage = page;
   this.updatePagedOrders();
