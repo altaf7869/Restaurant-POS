@@ -1,0 +1,40 @@
+.signup-wrapper {
+  background: linear-gradient(135deg, #e6fffa, #f0fff4);
+}
+
+.signup-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.signup-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.form-control, .form-select {
+  border-radius: 12px;
+  transition: box-shadow 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25); /* green glow */
+}
+
+.btn-success {
+  box-shadow: 0 3px 10px rgba(25, 135, 84, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 15px rgba(25, 135, 84, 0.5);
+}
+
+.signup-logo i {
+  background: rgba(25, 135, 84, 0.1);
+  padding: 12px;
+  border-radius: 50%;
+}

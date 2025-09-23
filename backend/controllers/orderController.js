@@ -3,6 +3,7 @@ const { generateOrderHtml } = require('../utils/orderTemplate');
 const { generateOrderPdf } = require("../utils/pdfGenerator");
 const { generateKitchenHtml } = require('../utils/kitchenTemplate'); // new utility for kitchen slip
 const axios = require("axios");
+const FormData = require('form-data');
 const https = require('https');
 
 
@@ -200,7 +201,7 @@ async function getOrderByTable(req, res) {
 /**
  * Share order via WhatsApp Cloud API
  */
- async function shareOrder(req, res) {
+async function shareOrder(req, res) {
   try {
     const { phone } = req.body;
     const orderId = req.params.id;
@@ -220,21 +221,27 @@ async function getOrderByTable(req, res) {
       return res.status(500).json({ message: "Failed to generate PDF" });
     }
 
-    // HTTPS agent (ignore self-signed certs, if internal)
+    // HTTPS agent to ignore self-signed certificates (for local/dev)
     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+    // Prepare multipart/form-data for WhatsApp media upload
+    const form = new FormData();
+    form.append('file', pdfBuffer, {
+      filename: `order-${order.Id}.pdf`,
+      contentType: 'application/pdf'
+    });
+    form.append('messaging_product', 'whatsapp');
 
     // Upload PDF to WhatsApp Cloud API
     const mediaUploadRes = await axios.post(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/media`,
-      pdfBuffer,
+      form,
       {
         headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          'Content-Type': 'application/pdf'
+          ...form.getHeaders(),
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`
         },
-        params: { messaging_product: 'whatsapp' },
-        httpsAgent,
-        responseType: 'json'
+        httpsAgent
       }
     );
 
@@ -261,8 +268,7 @@ async function getOrderByTable(req, res) {
           Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        httpsAgent,
-        responseType: 'json'
+        httpsAgent
       }
     );
 

@@ -6,6 +6,7 @@ import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
 import { SearchFilterPipe } from '../../pipes/search-filter.pipe';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-waiter',
@@ -23,9 +24,11 @@ export class WaiterComponent implements OnInit {
   selectedTable: any = null;
   activeCategoryId: number | null = null;
   orderItems: OrderItem[] = [];
+userRole: string | null = null;
 
   constructor(
     private api: ApiService,
+    private authService:AuthService,
     private orderService: OrderService,
     private socket: SocketService,
     private cd: ChangeDetectorRef,
@@ -33,6 +36,7 @@ export class WaiterComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.userRole = this.authService.getUserRole();
     this.loadTables();
     this.loadCategories();
     this.loadMenu();
@@ -67,6 +71,10 @@ export class WaiterComponent implements OnInit {
         this.orderItems = updatedOrder.Items || [];
       }
     });
+  }
+
+  canRemoveItems(): boolean {
+    return this.userRole === 'Admin' || this.userRole === 'Cashier';
   }
 
   /** ------------------ Table & Menu ------------------ */
@@ -185,7 +193,14 @@ decreaseQty(i: OrderItem) {
   this.updateOrder(); // sync immediately
 }
 
-removeItem(i: OrderItem) { this.orderItems = this.orderItems.filter(x => x.menuItemId !== i.menuItemId); this.updateOrder(); }
+removeItem(i: OrderItem) { 
+  if (!this.canRemoveItems()) {
+    this.toast.warning('Only Admin or Cashier can remove items.');
+    return;
+  }
+  this.orderItems = this.orderItems.filter(x => x.menuItemId !== i.menuItemId); 
+  this.updateOrder(); 
+}
 
 private updateOrder() {
   if (!this.selectedTable) return;
@@ -232,6 +247,7 @@ private updateOrder() {
 
   /** ------------------ Clear Order ------------------ */
   clearOrder() {
+     if (!this.canRemoveItems()) return;
     if (!this.selectedTable) { this.toast.info('Select table first'); return; }
     const tableId = this.selectedTable.Id;
 

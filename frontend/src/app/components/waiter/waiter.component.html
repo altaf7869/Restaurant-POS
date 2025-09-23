@@ -81,9 +81,10 @@
         <!-- Header -->
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
           <span>🧾 Current Order ({{ orderItems.length }} items)</span>
-          <button class="btn btn-sm btn-light"
-           [disabled]="selectedTable?.LastOrder?.Status?.toLowerCase() === 'pending'"
-          (click)="clearOrder()">🗑 Clear</button>
+         <button class="btn btn-sm btn-light"
+        [disabled]="!canRemoveItems() || selectedTable?.LastOrder?.Status?.toLowerCase() === 'pending'"
+        (click)="clearOrder()">🗑 Clear</button>
+
         </div>
 
         <!-- Body -->
@@ -101,7 +102,10 @@
               ₹{{ item.Price * item.qty }}
             </div>
             <div class="mt-1 mt-md-0">
-              <button class="btn btn-sm btn-danger py-0 px-2" (click)="removeItem(item)">✕</button>
+              <button class="btn btn-sm btn-danger py-0 px-2"
+        *ngIf="canRemoveItems()"
+        (click)="removeItem(item)">✕</button>
+
             </div>
           </div>
         </div>

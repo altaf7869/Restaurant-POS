@@ -1,15 +1,19 @@
-<div class="container mt-4">
-  <div class="card shadow-sm border-0 rounded-3">
-    <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+<div class="container my-4">
+  <div class="card shadow-lg border-0 rounded-4">
+    <!-- Header -->
+    <div class="card-header text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center rounded-top-4"
+         style="background: linear-gradient(135deg, #0d6efd, #084298);">
       <h4 class="mb-2 mb-md-0">
-        <i class="bi bi-list-ul me-2"></i>Manage Menu
+        <i class="bi bi-list-ul me-2"></i> Manage Menu
       </h4>
 
       <!-- Search Filter -->
-      <div class="input-group w-100 w-md-25">
-        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+      <div class="input-group w-100 w-md-25 shadow-sm rounded-3 overflow-hidden">
+        <span class="input-group-text bg-white border-0">
+          <i class="bi bi-search"></i>
+        </span>
         <input type="text"
-               class="form-control"
+               class="form-control border-0"
                placeholder="Search menu..."
                [(ngModel)]="searchText"
                (ngModelChange)="applyFilter()">
@@ -18,75 +22,101 @@
 
     <div class="card-body">
       <!-- Menu Form -->
-      <form [formGroup]="menuForm" (ngSubmit)="submitForm()" class="row g-3 mb-4">
+      <form [formGroup]="menuForm"
+            (ngSubmit)="submitForm()"
+            class="row g-2 g-md-3 align-items-end mb-4">
+
+        <!-- Menu Name -->
         <div class="col-12 col-md-3">
-          <input type="text" class="form-control" placeholder="Menu Name" formControlName="name">
+          <label class="form-label small fw-semibold">Menu Name</label>
+          <input type="text"
+                 class="form-control rounded-3 shadow-sm"
+                 placeholder="Enter menu name"
+                 formControlName="name">
         </div>
 
+        <!-- Price -->
         <div class="col-12 col-md-2">
-          <input type="number" class="form-control" placeholder="Price" formControlName="price">
+          <label class="form-label small fw-semibold">Price</label>
+          <input type="number"
+                 class="form-control rounded-3 shadow-sm"
+                 placeholder="₹ Price"
+                 formControlName="price">
         </div>
 
+        <!-- Category -->
         <div class="col-12 col-md-3">
-          <select class="form-select" formControlName="categoryId">
+          <label class="form-label small fw-semibold">Category</label>
+          <select class="form-select rounded-3 shadow-sm"
+                  formControlName="categoryId">
             <option value="">Select Category</option>
             <option *ngFor="let c of categories" [value]="c.Id">{{ c.Name }}</option>
           </select>
         </div>
 
-        <div class="col-12 col-md-2 d-flex align-items-center">
-          <div class="form-check">
+        <!-- Active Switch -->
+        <div class="col-6 col-md-2 d-flex align-items-center">
+          <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" formControlName="isActive" id="isActive">
             <label class="form-check-label ms-1" for="isActive">Active</label>
           </div>
         </div>
 
-        <div class="col-12 col-md-2 d-grid">
-          <button type="submit" class="btn btn-success">
+        <!-- Submit Button -->
+        <div class="col-6 col-md-2 d-grid">
+          <button type="submit"
+                  class="btn btn-success rounded-3 fw-bold shadow-sm">
             <i class="bi" [ngClass]="editMode ? 'bi-arrow-repeat' : 'bi-plus-circle'"></i>
-            {{ editMode ? 'Update' : 'Add' }}
+            <span class="d-none d-md-inline ms-1">
+              {{ editMode ? 'Update' : 'Add' }}
+            </span>
           </button>
         </div>
       </form>
 
       <!-- Menu List Table -->
       <div class="table-responsive">
-        <table class="table table-hover table-bordered align-middle text-center">
-          <thead class="table-dark sticky-top">
+        <table class="table table-hover align-middle text-center mb-0">
+          <thead class="table-primary">
             <tr>
-              <th scope="col">ID</th>
-              <th scope="col">Menu Name</th>
-              <th scope="col">Price</th>
-              <th scope="col">Category</th>
-              <th scope="col">Status</th>
-              <th scope="col" style="width: 120px;">Actions</th>
+              <th class="text-nowrap">#</th>
+              <th class="text-nowrap text-start">Menu Name</th>
+              <th class="text-nowrap">Price</th>
+              <th class="text-nowrap">Category</th>
+              <th class="text-nowrap">Status</th>
+              <th class="text-nowrap" style="width: 120px;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let m of pagedMenuItems">
-              <td>{{ m.Id }}</td>
-              <td class="text-start">{{ m.Name }}</td>
+            <tr *ngFor="let m of pagedMenuItems; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td class="text-start fw-semibold">{{ m.Name }}</td>
               <td><span class="fw-bold">{{ m.Price | currency:'INR' }}</span></td>
               <td>{{ m.CategoryName }}</td>
               <td>
-                <span class="badge px-3 py-2"
-                      [class.bg-success]="m.IsActive"
-                      [class.bg-secondary]="!m.IsActive">
-                  <i class="bi" [ngClass]="m.IsActive ? 'bi-check-circle' : 'bi-x-circle'"></i>
+                <span class="badge px-3 py-2 rounded-pill"
+                      [class.bg-success-subtle]="m.IsActive"
+                      [class.bg-secondary-subtle]="!m.IsActive">
+                  <i class="bi me-1"
+                     [ngClass]="m.IsActive ? 'bi-check-circle text-success' : 'bi-x-circle text-secondary'"></i>
                   {{ m.IsActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td>
-                <button class="btn btn-warning btn-sm me-1" (click)="editMenu(m)">
-                  <i class="bi bi-pencil-square"></i>
+                <button class="btn btn-warning btn-sm rounded-circle me-1"
+                        (click)="editMenu(m)">
+                  <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" (click)="deleteMenu(m.Id)">
+                <button class="btn btn-danger btn-sm rounded-circle"
+                        (click)="deleteMenu(m.Id)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
             </tr>
+
+            <!-- No Data -->
             <tr *ngIf="pagedMenuItems.length === 0">
-              <td colspan="6" class="text-center text-muted py-3">
+              <td colspan="6" class="text-center text-muted py-4">
                 <i class="bi bi-info-circle me-2"></i>No menu items found
               </td>
             </tr>

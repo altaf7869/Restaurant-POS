@@ -1,21 +1,21 @@
 .order-card {
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.order-card:hover {
-  transform: scale(1.02);
+/* .order-card:hover {
+  transform: scale(.02);
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
+} */
 
 .order-table th, .order-table td {
   vertical-align: middle !important;
 }
 
-.hover-scale {
+/* .hover-scale {
   transition: transform 0.2s;
 }
 .hover-scale:hover {
   transform: scale(1.05);
-}
+} */
 
 .btn-outline-primary:hover,
 .btn-outline-success:hover,

@@ -2,5 +2,5 @@
 @import 'ngx-toastr/toastr';
 
 body {
-  padding-top: 60px; /* Adjust if your navbar is taller */
+  padding-top: 50px; /* Adjust if your navbar is taller */
 }

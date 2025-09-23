@@ -1,19 +1,24 @@
-<div class="container d-flex justify-content-center align-items-center min-vh-100 bg-light">
-  <div class="card shadow-lg p-4 rounded-4" style="width: 100%; max-width: 400px;">
+<div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100">
+  <div class="card login-card shadow-lg p-4 p-md-5 rounded-4">
     
-    <!-- Header -->
+    <!-- Logo / Header -->
     <div class="text-center mb-4">
-      <h3 class="fw-bold text-primary">Restaurant POS Login</h3>
-      <p class="text-muted small">Welcome back! Please login to your account.</p>
+      <div class="login-logo mb-3">
+        <i class="bi bi-shop-window text-primary fs-1"></i>
+      </div>
+      <h3 class="fw-bold text-dark">Welcome Back</h3>
+      <p class="text-muted small">Login to continue using <span class="fw-semibold text-primary">Restaurant POS</span></p>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="submitForm()">
       
       <!-- Username -->
-      <div class="mb-3 position-relative">
+      <div class="mb-3">
         <label class="form-label fw-semibold">Username</label>
         <div class="input-group">
-          <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-fill"></i></span>
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-person-fill text-primary"></i>
+          </span>
           <input type="text" class="form-control border-start-0" formControlName="username" placeholder="Enter username" autofocus>
         </div>
         <div *ngIf="loginForm.controls['username'].invalid && loginForm.controls['username'].touched" class="text-danger small mt-1">
@@ -22,10 +27,12 @@
       </div>
 
       <!-- Password -->
-      <div class="mb-3 position-relative">
+      <div class="mb-3">
         <label class="form-label fw-semibold">Password</label>
         <div class="input-group">
-          <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock-fill"></i></span>
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-lock-fill text-primary"></i>
+          </span>
           <input [type]="showPassword ? 'text' : 'password'" class="form-control border-start-0" formControlName="password" placeholder="Enter password">
           <button type="button" class="btn btn-outline-secondary" (click)="togglePassword()">
             <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
@@ -38,20 +45,20 @@
 
       <!-- Server error -->
       <div *ngIf="errorMessage" class="alert alert-danger py-1 mt-2">
-        {{errorMessage}}
+        {{ errorMessage }}
       </div>
 
       <!-- Submit button -->
-      <div class="d-grid mb-3 mt-3">
-        <button type="submit" class="btn btn-primary fw-bold py-2">
-          Login
+      <div class="d-grid mt-4 mb-3">
+        <button type="submit" class="btn btn-primary fw-bold py-2 rounded-pill">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Login
         </button>
       </div>
 
       <!-- Signup link -->
       <div class="text-center small">
-        Don't have an account? 
-        <a routerLink="/signup" class="text-decoration-none fw-semibold text-primary">Sign up here</a>
+        <span class="text-muted">Don't have an account?</span>
+        <a routerLink="/signup" class="text-decoration-none fw-semibold text-primary ms-1">Sign up</a>
       </div>
     </form>
   </div>
