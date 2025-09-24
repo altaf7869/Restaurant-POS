@@ -18,6 +18,7 @@ export class HeaderComponent implements AfterViewInit {
   loggedInUserRole: string | null = null;
 
   menuItems = [
+  { label: 'Dashboard', icon: 'bi-people', link: '/dashboard', roles: ['Admin'] },
   { label: 'Users', icon: 'bi-people', link: '/users', roles: ['Admin'] },
   { label: 'Categories', icon: 'bi-grid', link: '/categories', roles: ['Admin'] },
   { label: 'Menu', icon: 'bi-card-list', link: '/menu', roles: ['Admin'] },

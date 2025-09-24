@@ -73,9 +73,17 @@ userRole: string | null = null;
     });
   }
 
-  canRemoveItems(): boolean {
-    return this.userRole === 'Admin' || this.userRole === 'Cashier';
-  }
+canRemoveItems(): boolean {
+  const isAdminOrCashier = this.userRole === 'Admin' || this.userRole === 'Cashier';
+  const isPendingOrder = this.selectedTable?.LastOrder?.Status?.toLowerCase() === 'pending';
+
+  // ✅ Waiters cannot edit a submitted order
+  if (isPendingOrder && !isAdminOrCashier) return false;
+
+  // ✅ Admin & Cashier can always edit (even after submit)
+  return true;
+}
+
 
   /** ------------------ Table & Menu ------------------ */
   loadTables() {
@@ -184,11 +192,19 @@ private syncOrder(status: 'draft' | 'pending') {
 }
 
 increaseQty(i: OrderItem) {
+   if (!this.canRemoveItems()) {
+    this.toast.warning('Only Admin or Cashier can remove items.');
+    return;
+  }
   i.qty++;
   this.updateOrder(); // sync immediately
 }
 
 decreaseQty(i: OrderItem) {
+   if (!this.canRemoveItems()) {
+    this.toast.warning('Only Admin or Cashier can remove items.');
+    return;
+  }
   i.qty > 1 ? i.qty-- : this.removeItem(i);
   this.updateOrder(); // sync immediately
 }

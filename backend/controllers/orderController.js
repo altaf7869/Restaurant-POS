@@ -198,6 +198,30 @@ async function getOrderByTable(req, res) {
   }
 }
 
+
+// controllers/orderController.js
+async function getPopularItems(req, res){
+  try {
+    let { fromDate, toDate, top } = req.query;
+
+    // 1️⃣ If no dates provided, set default to last 6 months
+    if (!fromDate || !toDate) {
+      const today = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+      fromDate = sixMonthsAgo.toISOString();
+      toDate = today.toISOString();
+    }
+
+    const items = await OrderModel.getPopularItems(fromDate, toDate, top || 10);
+    res.json(items);
+  } catch (err) {
+    console.error('Error fetching popular items:', err);
+    res.status(500).json({ message: 'Failed to fetch popular items' });
+  }
+};
+
 /**
  * Share order via WhatsApp Cloud API
  */
@@ -292,4 +316,5 @@ module.exports = {
   kitchenPrint,  // added
   shareOrder,
   getOrderByTable,
+  getPopularItems
 };

@@ -162,6 +162,37 @@ async function findOrderByTable(tableId) {
   return order;
 }
 
+// GET Popular items daily basis
+async function getPopularItems(fromDate, toDate, top = 10) {
+  let query = `
+    SELECT TOP (${top})
+      oi.MenuItemId,
+      m.Name,
+      SUM(oi.Qty) AS TotalQty,
+      SUM(oi.Qty * oi.Price) AS TotalSales
+    FROM OrderItems oi
+    INNER JOIN Orders o ON oi.OrderId = o.Id
+    INNER JOIN Menu m ON oi.MenuItemId = m.Id
+    WHERE o.Status IN ('pending', 'paid')
+  `;
+
+  if (fromDate && toDate) {
+    query += ` AND o.CreatedAt BETWEEN @fromDate AND @toDate`;
+  }
+
+  query += ` GROUP BY oi.MenuItemId, m.Name
+             ORDER BY TotalQty DESC`;
+
+  const request = new sql.Request();
+  if (fromDate && toDate) {
+    request.input('fromDate', sql.DateTime, fromDate);
+    request.input('toDate', sql.DateTime, toDate);
+  }
+
+  const result = await request.query(query);
+  return result.recordset;
+}
+
 /**
  * Delete an order
  */
@@ -182,5 +213,6 @@ module.exports = {
   update,
   updateStatus,
   findOrderByTable,
-  deleteOrder
+  deleteOrder,
+  getPopularItems
 };

@@ -11,6 +11,7 @@ import { WaiterComponent } from './components/waiter/waiter.component';
 import { CashierComponent } from './components/cashier/cashier.component';
 import { OrdersHistoryComponent } from './components/orders-history/orders-history.component';
 import { PaymentHistoryComponent } from './components/payment-history/payment-history.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 
 export const routes: Routes = [
   // 🔑 Public routes
@@ -18,6 +19,8 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
 
   // 👥 Admin-only routes
+    { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard, AdminGuard] },
+
   { path: 'users', component: UserComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'categories', component: CategoriesComponent, canActivate: [AuthGuard, AdminGuard] },
   { path: 'menu', component: MenuComponent, canActivate: [AuthGuard, AdminGuard] },

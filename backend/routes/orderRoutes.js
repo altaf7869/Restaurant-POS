@@ -13,6 +13,7 @@ const {
   kitchenPrint,
   shareOrder,
   getOrderByTable,
+  getPopularItems
 } = require('../controllers/orderController');
 
 // Protected routes (require auth)
@@ -27,5 +28,6 @@ router.put('/:id/mark-paid', auth, markPaid);
 router.post('/kitchen-print', auth, kitchenPrint);
 router.post('/:id/share', auth, shareOrder);
 router.get('/table/:tableId', auth, getOrderByTable);
+router.get('/popular-items', auth, getPopularItems);
 
 module.exports = router;

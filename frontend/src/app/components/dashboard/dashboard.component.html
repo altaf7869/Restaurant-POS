@@ -1,0 +1,96 @@
+<div class="container my-5">
+
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <span class="ms-3 fw-bold">Loading dashboard...</span>
+  </div>
+
+  <div *ngIf="!loading && dashboardData">
+
+    <!-- Summary Cards -->
+    <div class="row mb-5 g-4">
+      <!-- Total Orders -->
+      <div class="col-12 col-md-4">
+        <div class="card shadow-sm border-0 h-100 bg-primary text-white">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title">Total Orders</h6>
+              <h2 class="card-text fw-bold">{{ dashboardData.totalOrders }}</h2>
+            </div>
+            <i class="bi bi-bag-fill display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Sales -->
+      <div class="col-12 col-md-4">
+        <div class="card shadow-sm border-0 h-100 bg-success text-white">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title">Total Sales</h6>
+              <h2 class="card-text fw-bold">₹ {{ dashboardData.totalSales | number }}</h2>
+            </div>
+            <i class="bi bi-currency-rupee display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Orders -->
+      <div class="col-12 col-md-4">
+        <div class="card shadow-sm border-0 h-100 bg-warning text-dark">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="card-title">Pending Orders</h6>
+              <h2 class="card-text fw-bold">{{ dashboardData.pendingOrders }}</h2>
+            </div>
+            <i class="bi bi-clock-fill display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular Dishes -->
+    <div class="card shadow-sm border-0 mb-5">
+      <div class="card-header bg-gradient text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">🔥 Popular Dishes</h5>
+
+        <!-- Date Filter -->
+        <div class="d-flex align-items-center gap-2">
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="fromDate" (change)="fetchDashboard()" />
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="toDate" (change)="fetchDashboard()" />
+          <button class="btn btn-sm btn-light" (click)="clearDateFilter()">Clear</button>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered mb-0 align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Dish Name</th>
+                <th>Qty Ordered</th>
+                <th>Total Sales</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of dashboardData.popularItems; let i = index">
+                <th>{{ i + 1 }}</th>
+                <td>{{ item.Name }}</td>
+                <td>{{ item.TotalQty }}</td>
+                <td>₹ {{ item.TotalSales | number }}</td>
+              </tr>
+              <tr *ngIf="dashboardData.popularItems.length === 0">
+                <td colspan="4" class="text-center text-muted py-3">No popular dishes yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
