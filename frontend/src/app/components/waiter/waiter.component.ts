@@ -115,7 +115,7 @@ canRemoveItems(): boolean {
     const unsavedItems = this.orderService.getOrderByTableId(table.Id);
     if (unsavedItems.length) return 'occupied';
     if (table.LastOrder?.Status?.toLowerCase() === 'pending') return 'pending';
-    return 'free';
+    return 'Free';
   }
 
   getFilteredMenu() {

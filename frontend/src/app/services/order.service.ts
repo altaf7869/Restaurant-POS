@@ -33,7 +33,10 @@ export class OrderService {
   private orderMap: { [tableId: number]: OrderItem[] } = {};
   private orderMapSubject = new BehaviorSubject<{ [tableId: number]: OrderItem[] }>({});
 
-  constructor(private http: HttpClient, private auth: AuthService) {}
+  constructor(private http: HttpClient, private auth: AuthService) {
+        this.loadOrderMapFromLocal();
+
+  }
 
   /** Centralized headers */
   private getHeaders() {
@@ -117,33 +120,46 @@ getOrderByTable(tableId: number) {
 }
 
 
+  
   /** ------------------ TABLE ORDER CACHE ------------------ */
 
-  /** Observable for reactive updates */
   getOrderMap$(): Observable<{ [tableId: number]: OrderItem[] }> {
     return this.orderMapSubject.asObservable();
   }
 
-  /** Get current items for a table */
   getOrderByTableId(tableId: number): OrderItem[] {
     return this.orderMap[tableId] || [];
   }
 
-  /** Set items for a table and emit changes */
   setOrderForTable(tableId: number, items: OrderItem[]) {
     this.orderMap[tableId] = items;
+    this.saveOrderMapToLocal();
     this.orderMapSubject.next({ ...this.orderMap });
   }
 
-  /** Clear items for a specific table */
   clearTable(tableId: number) {
     delete this.orderMap[tableId];
+    this.saveOrderMapToLocal();
     this.orderMapSubject.next({ ...this.orderMap });
   }
 
-  /** Clear all tables */
   clearAll() {
     this.orderMap = {};
-    this.orderMapSubject.next({ ...this.orderMap });
+    localStorage.removeItem('orderMap');
+    this.orderMapSubject.next({});
+  }
+
+  /** ------------------ LocalStorage Persistence ------------------ */
+
+  private saveOrderMapToLocal() {
+    localStorage.setItem('orderMap', JSON.stringify(this.orderMap));
+  }
+
+  private loadOrderMapFromLocal() {
+    const data = localStorage.getItem('orderMap');
+    if (data) {
+      this.orderMap = JSON.parse(data);
+      this.orderMapSubject.next({ ...this.orderMap });
+    }
   }
 }

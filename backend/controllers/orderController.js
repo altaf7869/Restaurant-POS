@@ -199,7 +199,7 @@ async function getOrderByTable(req, res) {
 }
 
 
-// controllers/orderController.js
+// Get Popular Items
 async function getPopularItems(req, res){
   try {
     let { fromDate, toDate, top } = req.query;
@@ -214,7 +214,7 @@ async function getPopularItems(req, res){
       toDate = today.toISOString();
     }
 
-    const items = await OrderModel.getPopularItems(fromDate, toDate, top || 10);
+    const items = await orderModel.getPopularItems(fromDate, toDate, top || 10);
     res.json(items);
   } catch (err) {
     console.error('Error fetching popular items:', err);
@@ -241,20 +241,22 @@ async function shareOrder(req, res) {
 
     // Generate PDF buffer
     const pdfBuffer = await generateOrderPdf(order);
+    console.log("Generated PDF size:", pdfBuffer?.length);
+
     if (!pdfBuffer) {
       return res.status(500).json({ message: "Failed to generate PDF" });
     }
 
-    // HTTPS agent to ignore self-signed certificates (for local/dev)
+    // HTTPS agent (needed only for local/self-signed certs)
     const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-    // Prepare multipart/form-data for WhatsApp media upload
+    // Prepare form-data for WhatsApp media upload
     const form = new FormData();
-    form.append('file', pdfBuffer, {
+    form.append("file", pdfBuffer, {
       filename: `order-${order.Id}.pdf`,
-      contentType: 'application/pdf'
+      contentType: "application/pdf"
     });
-    form.append('messaging_product', 'whatsapp');
+    form.append("messaging_product", "whatsapp");
 
     // Upload PDF to WhatsApp Cloud API
     const mediaUploadRes = await axios.post(
@@ -269,6 +271,8 @@ async function shareOrder(req, res) {
       }
     );
 
+    //console.log("Media Upload Response:", mediaUploadRes.data);
+
     const mediaId = mediaUploadRes.data?.id;
     if (!mediaId) {
       return res.status(500).json({ message: "Failed to upload PDF to WhatsApp" });
@@ -278,9 +282,9 @@ async function shareOrder(req, res) {
     const sendMsgRes = await axios.post(
       `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
-        messaging_product: 'whatsapp',
+        messaging_product: "whatsapp",
         to: phone,
-        type: 'document',
+        type: "document",
         document: {
           id: mediaId,
           caption: `🧾 Your Bill #${order.Id}`,
@@ -290,17 +294,29 @@ async function shareOrder(req, res) {
       {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         },
         httpsAgent
       }
     );
 
-    res.json({ message: "Order shared on WhatsApp!", data: sendMsgRes.data });
+    //console.log("Send Message Response:", sendMsgRes.data);
 
+    res.json({ message: "Order shared on WhatsApp!", data: sendMsgRes.data });
   } catch (err) {
-    console.error("Share Order Error:", err.response?.data || err.message);
-    res.status(500).json({ error: err.response?.data || err.message });
+    if (err.response) {
+      console.error("WhatsApp API Error:", {
+        status: err.response.status,
+        headers: err.response.headers,
+        data: err.response.data
+      });
+      return res
+        .status(err.response.status)
+        .json({ error: err.response.data });
+    } else {
+      console.error("Unexpected Error:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
   }
 }
 

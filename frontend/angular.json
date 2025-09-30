@@ -28,7 +28,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/canvasjs/dist/canvasjs.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -84,7 +86,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/canvasjs/dist/canvasjs.min.js"
+            ]
           }
         }
       }

@@ -18,7 +18,7 @@
           <span class="fw-bold">🧾 Order #{{ o.Id }}</span>
           <span class="badge bg-info text-dark ms-2">Table {{ o.TableId }}</span>
           <span *ngIf="o.Status === 'Paid'" class="badge bg-success ms-2">Paid</span>
-          <span *ngIf="o.Status === 'Pending'" class="badge bg-warning text-dark ms-2">Pending</span>
+          <span *ngIf="o.Status === 'pending'" class="badge bg-warning text-dark ms-2">Pending</span>
         </div>
         <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
           <button class="btn btn-sm btn-outline-success" (click)="openPaymentModal(o)">✅ Paid</button>
