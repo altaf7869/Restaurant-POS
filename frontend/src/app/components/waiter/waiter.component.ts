@@ -179,8 +179,6 @@ private syncOrder(status: 'draft' | 'pending') {
   this.socket.emitEvent('orderUpdated', payload);
 }
 
-
-
  addToOrder(item: any) {
   if (!this.selectedTable) return;
 
