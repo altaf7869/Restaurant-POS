@@ -1,27 +1,28 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { DashboardData, DashboardService } from '../../services/dashboard.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-declare var CanvasJS: any;
+import { CanvasJSAngularChartsModule } from '@canvasjs/angular-charts';
 
 @Component({
   selector: 'app-dashboard',
-  imports:[CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, CanvasJSAngularChartsModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, AfterViewChecked {
- dashboardData: DashboardData | null = null;
+export class DashboardComponent implements OnInit {
+
+  dashboardData: DashboardData | null = null;
   loading = false;
 
   fromDate: string | null = null;
   toDate: string | null = null;
 
-  private chartsRendered = false; // ✅ prevent multiple renders
-
-  @ViewChild('salesChartContainer') salesChartRef!: ElementRef;
-  @ViewChild('ordersChartContainer') ordersChartRef!: ElementRef;
-  @ViewChild('pendingChartContainer') pendingChartRef!: ElementRef;
+  // Chart option objects
+  totalOrdersChartOptions: any = {};
+  totalSalesChartOptions: any = {};
+  pendingOrdersChartOptions: any = {};
+  trafficChartOptions: any = {};
 
   constructor(private dashboardService: DashboardService) {}
 
@@ -29,56 +30,28 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
     this.fetchDashboard();
   }
 
-  ngAfterViewChecked(): void {
-    // Render charts only once, after view and dashboardData exist
-    if (this.dashboardData && !this.chartsRendered
-        && this.salesChartRef && this.ordersChartRef && this.pendingChartRef) {
-      this.renderCharts();
-      this.chartsRendered = true;
-    }
-  }
-
   fetchDashboard() {
     this.loading = true;
-    this.chartsRendered = false; // reset on new data
     this.dashboardService.getDashboard(this.fromDate, this.toDate).subscribe({
       next: (res) => {
         this.dashboardData = res;
         this.loading = false;
+        this.setupMiniCharts();
+        this.setupTrafficChart();
       },
       error: (err) => {
         console.error(err);
         this.loading = false;
-        // fallback demo data
-        this.dashboardData = { dateRange: null, totalOrders: 50, totalSales: 50000, pendingOrders: 5, popularItems: [] };
       }
     });
   }
 
-  renderCharts() {
+  setupMiniCharts() {
     if (!this.dashboardData) return;
 
-    new CanvasJS.Chart(this.salesChartRef.nativeElement, {
-      animationEnabled: true,
-      backgroundColor: "transparent",
-      axisX: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
-      axisY: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
-      toolTip: { enabled: false },
-      data: [{
-        type: "splineArea",
-        color: "rgba(255,255,255,0.6)",
-        markerSize: 0,
-        dataPoints: [
-          { y: this.dashboardData.totalSales },
-          { y: this.dashboardData.totalSales * 0.8 },
-          { y: this.dashboardData.totalSales * 1.2 },
-          { y: this.dashboardData.totalSales * 0.9 },
-          { y: this.dashboardData.totalSales * 1.1 }
-        ]
-      }]
-    }).render();
-
-    new CanvasJS.Chart(this.ordersChartRef.nativeElement, {
+    // Total Orders Mini Chart
+    this.totalOrdersChartOptions = {
+      height: 100,
       animationEnabled: true,
       backgroundColor: "transparent",
       axisX: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
@@ -96,9 +69,12 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
           { y: this.dashboardData.totalOrders * 1.3 }
         ]
       }]
-    }).render();
+    };
 
-    new CanvasJS.Chart(this.pendingChartRef.nativeElement, {
+    // Total Sales Mini Chart
+    this.totalSalesChartOptions = {
+       // <- explicitly define height
+ height: 100,
       animationEnabled: true,
       backgroundColor: "transparent",
       axisX: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
@@ -106,7 +82,29 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
       toolTip: { enabled: false },
       data: [{
         type: "splineArea",
-        color: "rgba(255,193,7,0.8)",
+        color: "rgba(255,255,255,0.6)",
+        markerSize: 0,
+        dataPoints: [
+          { y: this.dashboardData.totalSales },
+          { y: this.dashboardData.totalSales * 0.8 },
+          { y: this.dashboardData.totalSales * 1.2 },
+          { y: this.dashboardData.totalSales * 0.9 },
+          { y: this.dashboardData.totalSales * 1.1 }
+        ]
+      }]
+    };
+
+    // Pending Orders Mini Chart
+    this.pendingOrdersChartOptions = {
+       height: 100,
+      animationEnabled: true,
+      backgroundColor: "transparent",
+      axisX: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
+      axisY: { lineThickness: 0, tickThickness: 0, labelFormatter: () => "" },
+      toolTip: { enabled: false },
+      data: [{
+        type: "column",
+        color: "rgba(60, 70, 65, 0.8)",
         markerSize: 0,
         dataPoints: [
           { y: this.dashboardData.pendingOrders },
@@ -116,9 +114,56 @@ export class DashboardComponent implements OnInit, AfterViewChecked {
           { y: this.dashboardData.pendingOrders * 0.9 }
         ]
       }]
-    }).render();
+    };
+  }
+
+  setupTrafficChart() {
+    if (!this.dashboardData?.traffic?.length) return;
+
+    this.trafficChartOptions = {
+      animationEnabled: true,
+      theme: "light2",
+      title: { text: "Orders Traffic" },
+      axisX: { valueFormatString: "DD MMM", crosshair: { enabled: true, snapToDataPoint: true } },
+      axisY: { title: "Count", crosshair: { enabled: true } },
+      toolTip: { shared: true },
+      legend: {
+        cursor: "pointer",
+        verticalAlign: "bottom",
+        horizontalAlign: "right",
+        dockInsidePlotArea: true,
+        itemclick: function(e: any) {
+          e.dataSeries.visible = !e.dataSeries.visible;
+          e.chart.render();
+        }
+      },
+      data: [
+        {
+          type: "line",
+          showInLegend: true,
+          name: "Total Orders",
+          lineDashType: "dash",
+          markerType: "square",
+          dataPoints: this.dashboardData.traffic.map(t => ({
+            x: new Date(t.OrderDate),
+            y: t.TotalOrders
+          }))
+        },
+        {
+          type: "line",
+          showInLegend: true,
+          name: "Unique Tables",
+          lineDashType: "dot",
+          dataPoints: this.dashboardData.traffic.map(t => ({
+            x: new Date(t.OrderDate),
+            y: t.UniqueTables
+          }))
+        }
+      ]
+    };
   }
 
   onDateChange() { this.fetchDashboard(); }
   clearDateFilter() { this.fromDate = this.toDate = null; this.fetchDashboard(); }
+
 }

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>                    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>CanvasJS React Charts</title>
+    <style type="text/css">
+      pre code {
+        font-family: monospace;
+      }
+      .logo {
+        text-align: center
+      }
+      body {
+        font-family: Helvetica, arial, sans-serif;
+        padding: 30px;
+        color: #333;
+        line-height: 1.6;
+      }
+      pre {
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin: 0;
+        padding: 16px;
+        white-space: pre;
+        background: #f8f8f8;
+        display: block;
+      }
+      p {
+        margin-bottom: 8px;
+        font-weight: 400;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+      p, code {
+        margin: 15px 0;
+      }
+
+      h5 {
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        margin: 20px 0 10px;
+        padding: 0;
+        font-weight: bold;
+        cursor: text;
+        position: relative;
+      }
+
+      h2 {
+        border-bottom: 1px solid #cccccc;
+        padding-bottom: 4px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      h1, h2 {
+        color: black;
+      }
+
+      a {
+        color: #0275d8;
+        outline: 0;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: #00539b;
+      } 
+    </style>
+  </head>
+  <body>
+    <div class="logo">
+      <a href="https://www.npmjs.com/~canvasjs">
+        <img src="https://canvasjs.com/wp-content/uploads/images/logo/canvasjs-logo-240x100.png" alt="CanvasJS"/>
+      </a>
+    </div>
+    <h1>
+      CanvasJS React Charts
+    </h1>
+    <p>
+      CanvasJS React Chart Component for creating interactive charts and graphs for your react applications. Library supports a wide range of chart types including bar, line, area, pie, doughnut, etc.
+    </p>
+    <h2>
+      Installing CanvasJS React Charts
+    </h2>
+    <h5>
+      Download CanvasJS React Charts
+    </h5>
+    <p>
+      Download the commercial version of React Chart Package from <a href="https://canvasjs.com/my-account/">My Account Page</a>. Copy '<strong>@canvasjs</strong>' folder into src (lib or assets) folder of your app.
+    </p>
+    <h5>
+      Import React Chart Component
+    </h5>
+    <p>
+      Import the React Chart module into your React application.
+    </p>
+<pre><code>import CanvasJSReact from './@canvasjs/react-charts';
+//var CanvasJSReact = require('./@canvasjs/react-charts');
+
+var CanvasJSChart = CanvasJSReact.CanvasJSChart;
+</code></pre>
+<h5>Set the chart-options &amp; create chart</h5>
+<p>Set the chart-options &amp; use ‘CanvasJSChart’ selector to create chart.</p>
+<pre><code>class App extends Component {
+  render() {
+    const options = {
+      title: {
+        text: &quot;Basic Column Chart in React&quot;
+      },
+      data: [{
+        type: &quot;column&quot;,
+        dataPoints: [
+          { label: &quot;Apple&quot;,  y: 10  },
+          { label: &quot;Orange&quot;, y: 15  },
+          { label: &quot;Banana&quot;, y: 25  },
+          { label: &quot;Mango&quot;,  y: 30  },
+          { label: &quot;Grape&quot;,  y: 28  }
+        ]
+      }]
+    }
+    
+    return (
+    &lt;div&gt;
+      &lt;CanvasJSChart options = {options}
+        /* onRef = {ref =&gt; this.chart = ref} */
+      /&gt;
+    &lt;/div&gt;
+    );
+  }
+}
+</code></pre>
+  </body>
+</html>

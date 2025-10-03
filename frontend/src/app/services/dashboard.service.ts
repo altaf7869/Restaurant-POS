@@ -11,12 +11,19 @@ export interface PopularItem {
   TotalSales: number;
 }
 
+export interface TrafficItem {
+  OrderDate: string;
+  TotalOrders: number;
+  UniqueTables: number;
+}
+
 export interface DashboardData {
   dateRange: { fromDate: string; toDate: string } | null;
   totalOrders: number;
   totalSales: number;
   pendingOrders: number;
   popularItems: PopularItem[];
+  traffic?: TrafficItem[]; 
 }
 
 @Injectable({

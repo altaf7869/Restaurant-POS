@@ -1,0 +1,41 @@
+{
+	"name": "@canvasjs/angular-charts",
+	"version": "1.1.0",
+	"description": "CanvasJS Angular Charts",
+	"keywords": [
+		"angular charts",
+		"angular graphs",
+		"angular charting library",
+		"angular chart library",
+		"html5 charts",
+		"charts",
+		"graphs",
+		"dataviz",
+		"canvasjs",
+		"high performance charts",
+		"angular line charts",
+		"angular area charts",
+		"angular bar charts",
+		"angular pie charts"
+	],
+	"author": "fenopix",
+	"license": "SEE LICENSE IN <LICENSE>",
+	"homepage": "https://canvasjs.com/angular-charts/",
+	"peerDependencies": {
+		"@angular/common": ">=12.0.0",
+		"@angular/core": ">=12.0.0"
+	},
+	"dependencies": {
+		"tslib": "^1.10.0"
+	},
+	"main": "bundles/angular-charts.umd.js",
+	"module": "fesm5/angular-charts.js",
+	"es2015": "fesm2015/angular-charts.js",
+	"esm5": "esm5/angular-charts.js",
+	"esm2015": "esm2015/angular-charts.js",
+	"fesm5": "fesm5/angular-charts.js",
+	"fesm2015": "fesm2015/angular-charts.js",
+	"typings": "angular-charts.d.ts",
+	"metadata": "angular-charts.metadata.json",
+	"sideEffects": false
+}

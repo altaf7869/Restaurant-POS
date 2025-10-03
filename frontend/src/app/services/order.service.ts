@@ -50,7 +50,6 @@ export class OrderService {
   }
 
   /** ------------------ API METHODS ------------------ */
-
   createOrder(payload: Partial<Order>): Observable<Order> {
     return this.http.post<Order>(this.base, payload, this.getHeaders());
   }

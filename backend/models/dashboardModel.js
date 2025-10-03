@@ -34,7 +34,7 @@ async function getDashboardData(fromDate, toDate) {
     ${fromDate && toDate ? 'AND CreatedAt BETWEEN @fromDate AND @toDate' : ''};
   `;
 
-  // 3️⃣ Popular Items
+  // 3️⃣ Popular Items (from MenuItems + OrderItems)
   const popularItemsRequest = pool.request();
   const popularItemsQuery = `
     SELECT TOP 10
@@ -51,18 +51,37 @@ async function getDashboardData(fromDate, toDate) {
     ORDER BY TotalQty DESC;
   `;
 
-  // Run queries concurrently (but each with its own request)
-  const [ordersResult, pendingResult, popularResult] = await Promise.all([
+  // 4️⃣ Traffic Data (Orders per Day + Unique Tables)
+  const trafficRequest = pool.request();
+  if (fromDate && toDate) {
+    trafficRequest.input('fromDate', sql.DateTime, new Date(fromDate));
+    trafficRequest.input('toDate', sql.DateTime, new Date(toDate));
+  }
+  const trafficQuery = `
+    SELECT 
+      CAST(o.CreatedAt AS DATE) AS OrderDate,
+      COUNT(o.Id) AS TotalOrders,
+      COUNT(DISTINCT o.TableId) AS UniqueTables
+    FROM Orders o
+    ${dateCondition}
+    GROUP BY CAST(o.CreatedAt AS DATE)
+    ORDER BY OrderDate ASC;
+  `;
+
+  // Run queries concurrently
+  const [ordersResult, pendingResult, popularResult, trafficResult] = await Promise.all([
     totalOrdersRequest.query(totalOrdersQuery),
     pendingOrdersRequest.query(pendingOrdersQuery),
-    popularItemsRequest.query(popularItemsQuery)
+    popularItemsRequest.query(popularItemsQuery),
+    trafficRequest.query(trafficQuery)
   ]);
 
   return {
     totalOrders: ordersResult.recordset[0]?.TotalOrders || 0,
     totalSales: ordersResult.recordset[0]?.TotalSales || 0,
     pendingOrders: pendingResult.recordset[0]?.PendingOrders || 0,
-    popularItems: popularResult.recordset || []
+    popularItems: popularResult.recordset || [],
+    traffic: trafficResult.recordset || []
   };
 }
 

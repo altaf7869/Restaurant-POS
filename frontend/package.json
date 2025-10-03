@@ -18,6 +18,8 @@
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
+    "@canvasjs/angular-charts": "^1.2.0",
+    "@canvasjs/charts": "^3.14.1",
     "bootstrap": "^5.3.8",
     "canvasjs": "^1.8.3",
     "chart.js": "^4.5.0",
