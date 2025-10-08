@@ -18,6 +18,7 @@ export class CashierComponent implements OnInit {
   selectedOrder: any;
   customerName = '';
   customerPhone = '';
+  searchText = '';
 
   constructor(private orderService: OrderService, 
     private socket: SocketService, 
@@ -35,15 +36,15 @@ export class CashierComponent implements OnInit {
     });
 
     // Updates from waiter
-this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
-  const idx = this.orders.findIndex(o => o.Id === updated.Id);
-  if (idx > -1) {
-    this.orders[idx] = { ...updated };
-  } else {
-    this.orders.unshift(updated);
-  }
-  this.cd.detectChanges(); // 🔑 Force UI refresh
-});
+    this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
+      const idx = this.orders.findIndex(o => o.Id === updated.Id);
+      if (idx > -1) {
+        this.orders[idx] = { ...updated };
+      } else {
+        this.orders.unshift(updated);
+      }
+      this.cd.detectChanges(); // 🔑 Force UI refresh
+    });
 
     // Deleted orders
     this.socket.onEvent('orderDeleted').subscribe((payload: any) => {
@@ -135,7 +136,7 @@ this.socket.onEvent('orderUpdated').subscribe((updated: any) => {
   }
 
   cancelOrder(order: any) {
-    if (!confirm('Cancel order?')) return;
+    if (!confirm('Cancel Order?')) return;
     this.orderService.deleteOrder(order.Id).subscribe(() => {
       this.loadOrders();
       this.orderService.clearTable(order.TableId);

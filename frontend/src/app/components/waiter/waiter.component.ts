@@ -20,7 +20,7 @@ export class WaiterComponent implements OnInit {
   categories: any[] = [];
   menu: any[] = [];
   searchText = '';
-
+printedItems: any[] = []; 
   selectedTable: any = null;
   activeCategoryId: number | null = null;
   orderItems: OrderItem[] = [];
@@ -327,9 +327,35 @@ private updateOrder() {
     });
   }
 
-  printForKitchen() {
+// Track how many qty of each item has already been printed
+printedQtyMap: { [menuItemId: number]: number } = {};
+
+printForKitchen() {
   if (!this.orderItems.length) return;
-  this.orderService.kitchenPrint(this.selectedTable.TableNumber, this.orderItems)
+
+  // find only qty difference
+  const newItems: OrderItem[] = [];
+
+  this.orderItems.forEach(item => {
+    const alreadyPrinted = this.printedQtyMap[item.menuItemId] || 0;
+
+    if (item.qty > alreadyPrinted) {
+      // only the extra qty is new
+      const diff = item.qty - alreadyPrinted;
+
+      newItems.push({
+        ...item,
+        qty: diff   // ✅ only print the new qty
+      });
+    }
+  });
+
+  if (!newItems.length) {
+    console.log("No new items to print.");
+    return;
+  }
+
+  this.orderService.kitchenPrint(this.selectedTable.TableNumber, newItems)
     .subscribe({
       next: html => {
         const w = window.open('', '_blank', 'width=400,height=600');
@@ -346,6 +372,12 @@ private updateOrder() {
           </script>
         `);
         w.document.close();
+
+        // ✅ update printedQtyMap after successful print
+        newItems.forEach(item => {
+          this.printedQtyMap[item.menuItemId] =
+            (this.printedQtyMap[item.menuItemId] || 0) + item.qty;
+        });
       },
       error: err => console.error('Kitchen Print API Error:', err)
     });
