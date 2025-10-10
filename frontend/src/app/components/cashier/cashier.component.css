@@ -1,16 +1,65 @@
-.order-list {
+/* Scrollable sidebar */
+.scrollable-y {
   max-height: 80vh;
   overflow-y: auto;
 }
+
+/* Order list cards */
 .order-card {
-  background: #f9f9f9;
-  transition: 0.2s ease-in-out;
+  background: #ffffff;
+  transition: all 0.2s ease-in-out;
+  border-left: 5px solid transparent;
 }
 .order-card:hover {
-  background: #eef6ff;
-  transform: scale(1.02);
+  background: #f8f9fa;
+  transform: scale(1.01);
 }
 .order-card.active {
-  background: #d6eaff;
   border-left: 5px solid #0d6efd;
+  background: #e9f3ff;
+}
+
+/* Glassmorphism style for left panel */
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+}
+
+/* Gradient header */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd, #007bff);
+}
+
+/* Table style */
+.order-table th {
+  background-color: #f3f6f9;
+}
+.order-table td, .order-table th {
+  vertical-align: middle;
+}
+.order-table tr:hover {
+  background-color: #f9fcff;
+}
+
+/* Buttons hover animation */
+button:hover {
+  transform: scale(1.05);
+  transition: 0.2s ease;
+}
+
+/* Custom scrollbar */
+.scrollable-y::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollable-y::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .order-card {
+    flex-direction: column;
+    text-align: center;
+  }
 }
